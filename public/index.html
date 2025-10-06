@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Quiz Login</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome to Symposium Quiz</h1>
+    <form id="login-form">
+      <label>Enter Name:</label>
+      <input type="text" id="username" required>
+      <button type="submit">Start Quiz</button>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById("username").value.trim();
+      if (!username) {
+        alert("Please enter your name.");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: username })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          localStorage.setItem("participantId", data.participant.id);
+          localStorage.setItem("quizStatus", "active");
+          window.location.href = "/quiz.html";
+        } else {
+          alert("❌ " + data.error);
+        }
+      } catch (err) {
+        console.error("Login error:", err);
+        alert("⚠️ Could not connect to server. Try again later.");
+      }
+    });
+  </script>
+</body>
+</html>

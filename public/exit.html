@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Quiz Ended</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1 id="status-title"></h1>
+    <p id="status-message"></p>
+  </div>
+
+  <script>
+    // Get quiz status from localStorage
+    const status = localStorage.getItem("quizStatus");
+
+    const titleEl = document.getElementById("status-title");
+    const msgEl = document.getElementById("status-message");
+
+    if (status === "completed") {
+      titleEl.textContent = "✅ Quiz Completed";
+      msgEl.textContent = "Thank you for completing the quiz. Your answers have been submitted successfully.";
+    } 
+    else if (status === "timeout") {
+      titleEl.textContent = "⏰ Time Expired";
+      msgEl.textContent = "Your time is up. The quiz was auto-submitted.";
+    } 
+    else if (status === "disqualified") {
+      titleEl.textContent = "❌ Disqualified";
+      msgEl.textContent = "You switched tabs or broke the rules. Please contact the event organizer.";
+    } 
+    else {
+      titleEl.textContent = "ℹ️ Quiz Ended";
+      msgEl.textContent = "Session closed or something went wrong.";
+    }
+
+    // Block Back button → user cannot return to quiz
+    history.pushState(null, "", location.href);
+    window.onpopstate = function () {
+      history.pushState(null, "", location.href);
+    };
+  </script>
+</body>
+</html>
