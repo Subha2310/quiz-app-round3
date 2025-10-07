@@ -4,19 +4,21 @@ const bodyParser = require("body-parser");
 const { Pool } = require("pg");
 
 const app = express();
-const PORT = 3000;
+
+// ✅ Use Render's dynamic port or default to 3000 for local use
+const PORT = process.env.PORT || 3000;
+
+// ✅ PostgreSQL connection — use environment variables for Render
+const pool = new Pool({
+  user: process.env.DB_USER || "postgres",
+  host: process.env.DB_HOST || "localhost",
+  database: process.env.DB_NAME || "quizdb",
+  password: process.env.DB_PASSWORD || "admin123",
+  port: process.env.DB_PORT || 5432,
+});
 
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
-
-// PostgreSQL connection
-const pool = new Pool({
-  user: "postgres",
-  host: "localhost",
-  database: "quizdb",
-  password: "admin123", // your password
-  port: 5432,
-});
 
 // ================= ROUTES =================
 
@@ -34,7 +36,6 @@ app.post("/api/login", async (req, res) => {
     return res.status(400).json({ success: false, error: "Name is required" });
 
   try {
-    // Check if user already exists
     const existing = await pool.query("SELECT * FROM participants WHERE username=$1", [name]);
     if (existing.rows.length > 0) {
       const user = existing.rows[0];
@@ -71,7 +72,7 @@ app.get("/api/questions", async (req, res) => {
   }
 });
 
-// SUBMIT answers (completed)
+// SUBMIT answers
 app.post("/api/submit", async (req, res) => {
   const { participantId, answers } = req.body;
 
@@ -96,7 +97,7 @@ app.post("/api/submit", async (req, res) => {
   }
 });
 
-// TIMEOUT (when time runs out)
+// TIMEOUT
 app.post("/api/timeout", async (req, res) => {
   const { participantId, answers } = req.body;
 
@@ -121,7 +122,7 @@ app.post("/api/timeout", async (req, res) => {
   }
 });
 
-// DISQUALIFY (tab switch)
+// DISQUALIFY
 app.post("/api/disqualify", async (req, res) => {
   const { participantId } = req.body;
 
@@ -137,7 +138,7 @@ app.post("/api/disqualify", async (req, res) => {
   }
 });
 
-// ADMIN dashboard data
+// ADMIN
 app.get("/api/participants", async (req, res) => {
   try {
     const result = await pool.query(
@@ -151,5 +152,5 @@ app.get("/api/participants", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
