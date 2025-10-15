@@ -1,110 +1,160 @@
-let participantId = localStorage.getItem("participantId");
-let status = localStorage.getItem("quizStatus");
+// ===== QUIZ.JS =====
+document.addEventListener("DOMContentLoaded", () => {
+  const participant = JSON.parse(localStorage.getItem("participant"));
+  const quizForm = document.getElementById("quiz-form");
+  const timerElem = document.getElementById("timer");
 
-// 🚫 Block if not logged in OR already ended
-if (!participantId || ["disqualified", "completed", "timeout"].includes(status)) {
-  window.location.replace("/exit.html");
-}
+  if (!participant || !participant.id) {
+    alert("❌ No participant info found. Redirecting to login.");
+    window.location.href = "/";
+    return;
+  }
 
-let isSubmitting = false; // prevent false disqualify on submit
+  let questions = [];
+  let answers = {};
+  let totalTime = 10 * 60; // 10 minutes in seconds
+  let timerInterval;
+  let quizEnded = false;
 
-// Load questions dynamically
-async function loadQuestions() {
-  try {
-    let res = await fetch("/api/questions");
-    let questions = await res.json();
+  // ===== Fetch questions =====
+  fetch("/api/questions")
+    .then((res) => res.json())
+    .then((data) => {
+      questions = data;
+      renderQuestions();
+      startTimer();
+    })
+    .catch((err) => {
+      console.error("Error fetching questions:", err);
+      alert("Failed to load questions. Try refreshing.");
+    });
 
-    let form = document.getElementById("quiz-form");
-    form.innerHTML = "";
-
-    questions.forEach((q, idx) => {
-      form.innerHTML += `
-        <div>
-          <p>${idx + 1}. ${q.question}</p>
-          <input type="text" name="${q.id}" required>
+  // ===== Render questions =====
+  function renderQuestions() {
+    questions.forEach((q, index) => {
+      const block = document.createElement("div");
+      block.className = "question-block";
+      block.innerHTML = `
+        <h3>Q${index + 1}. ${q.question}</h3>
+        <div class="options">
+          ${q.options
+            .map(
+              (opt) => `
+            <label class="option">
+              <input type="radio" name="q${q.id}" value="${opt}" />
+              ${opt}
+            </label>
+          `
+            )
+            .join("")}
         </div>
       `;
+      quizForm.insertBefore(block, quizForm.querySelector(".submit-bar"));
     });
-  } catch (err) {
-    console.error("Failed to load questions", err);
-    document.getElementById("quiz-form").innerHTML =
-      "<p>⚠️ Could not load questions. Please contact admin.</p>";
   }
-}
-loadQuestions();
 
-// Timer (example: 60s)
-let timeLeft = 60;
-let timerElement = document.getElementById("timer");
-
-let timer = setInterval(() => {
-  if (timeLeft <= 0) {
-    clearInterval(timer);
-    alert("⏰ Time’s up! Auto-submitting quiz.");
-    localStorage.setItem("quizStatus", "timeout");
-    submitQuiz(true);  // auto-submit on timeout
-  } else {
-    timerElement.textContent = `Time left: ${timeLeft}s`;
-    timeLeft--;
+  // ===== Timer =====
+  function startTimer() {
+    updateTimerDisplay();
+    timerInterval = setInterval(() => {
+      totalTime--;
+      updateTimerDisplay();
+      if (totalTime <= 0 && !quizEnded) {
+        clearInterval(timerInterval);
+        quizEnded = true;
+        handleTimeout();
+      }
+    }, 1000);
   }
-}, 1000);
 
-// Detect tab switch → disqualify
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden && !isSubmitting) {
-    alert("⚠️ You switched tabs. Disqualified!");
-    localStorage.setItem("quizStatus", "disqualified");
-    localStorage.removeItem("quizScore");
-
-    fetch("/api/disqualify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ participantId })
-    });
-
-    window.location.replace("/exit.html");
+  function updateTimerDisplay() {
+    const minutes = Math.floor(totalTime / 60);
+    const seconds = totalTime % 60;
+    timerElem.textContent = `⏱ ${minutes
+      .toString()
+      .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   }
-});
 
-// Submit handler (manual submit)
-document.getElementById("quiz-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  await submitQuiz(false);
-});
-
-async function submitQuiz(autoSubmit = false) {
-  clearInterval(timer);
-  isSubmitting = true;  // ✅ avoid false disqualification
-
-  const formData = new FormData(document.getElementById("quiz-form"));
-  let answers = {};
-  formData.forEach((value, key) => {
-    answers[key] = value.trim();
+  // ===== Capture answers =====
+  quizForm.addEventListener("change", (e) => {
+    if (e.target.name && e.target.value) {
+      const qid = e.target.name.replace("q", "");
+      answers[qid] = e.target.value;
+    }
   });
 
-  try {
-    let url = autoSubmit ? "/api/timeout" : "/api/submit"; // ✅ route based on case
-    let res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ participantId, answers })
-    });
-
-    let data = await res.json();
-
-    if (data.success) {
-      if (autoSubmit) {
-        localStorage.setItem("quizStatus", "timeout");
-      } else {
-        localStorage.setItem("quizStatus", "completed");
-      }
-    } else {
-      localStorage.setItem("quizStatus", "disqualified");
+  // ===== Tab Switch → Disqualify =====
+  let tabSwitched = false;
+  window.addEventListener("blur", () => {
+    if (!tabSwitched && !quizEnded) {
+      tabSwitched = true;
+      quizEnded = true;
+      alert("🚫 You switched tabs. You are disqualified!");
+      disqualifyParticipant();
     }
-  } catch (err) {
-    console.error("Submit error:", err);
-    localStorage.setItem("quizStatus", "disqualified");
+  });
+
+  // ===== Form submit =====
+  quizForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!quizEnded) {
+      quizEnded = true;
+      submitQuiz();
+    }
+  });
+
+  // ===== Submit quiz manually or normally =====
+  async function submitQuiz(timeout = false) {
+    try {
+      const res = await fetch("/api/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          participantId: participant.id,
+          answers,
+          timeout,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem("score", data.score);
+        localStorage.setItem("createdAt", data.created_at);
+        localStorage.setItem("submittedAt", data.submitted_at);
+        localStorage.setItem(
+          "quizStatus",
+          timeout ? "timeout" : "completed"
+        );
+      } else {
+        localStorage.setItem("quizStatus", "disqualified");
+      }
+    } catch (err) {
+      console.error("Submit error:", err);
+      localStorage.setItem("quizStatus", "disqualified");
+    } finally {
+      window.location.href = "/exit.html";
+    }
   }
 
-  window.location.replace("/exit.html");
-}
+  // ===== Handle timeout =====
+  function handleTimeout() {
+    alert("⏰ Time’s up! Submitting your quiz automatically...");
+    submitQuiz(true);
+  }
+
+  // ===== Disqualify (Tab Switch) =====
+  async function disqualifyParticipant() {
+    try {
+      await fetch("/api/disqualify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ participantId: participant.id }),
+      });
+      localStorage.setItem("quizStatus", "disqualified");
+    } catch (err) {
+      console.error("Disqualify error:", err);
+    } finally {
+      window.location.href = "/exit.html";
+    }
+  }
+});

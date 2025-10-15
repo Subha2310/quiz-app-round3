@@ -1,50 +1,256 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Quiz Login</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz Login | MindClash</title>
+  <link href="https://fonts.googleapis.com/css2?family=Algerian&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: "Poppins", "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #e0f2f1, #b2ebf2);
+      color: #1e293b;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: #ffffff;
+      padding: 25px 25px; /* reduced padding */
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+      text-align: center;
+      max-width: 600px;
+      width: 95%;
+      animation: fadeIn 0.6s ease;
+    }
+
+    h1 {
+      margin-bottom: 5px;
+      font-size: 32px;
+      color: #0b5394; /* Blue */
+      font-family: "Times New Roman", Times, serif;
+      font-weight: 700;
+    }
+
+    h2 {
+      margin-bottom: 5px;
+      font-size: 28px;
+      color: #6a0dad; /* Purple */
+      font-family: "Algerian", sans-serif;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .title-sub {
+      font-family: "Algerian", sans-serif;
+      margin-bottom: 20px;
+      line-height: 1.3;
+    }
+
+    .title-main {
+      color: #c71585; /* Dark Pink */
+      font-size: 26px; /* Large for MindClash */
+      font-weight: 700;
+    }
+
+    .title-round {
+      color: peach;
+      font-size: 20px; /* Smaller for Round 1: Easy Level */
+      display: block;
+      margin-top: 5px;
+    }
+
+    label {
+      display: block;
+      font-size: 16px;
+      margin-bottom: 8px;
+      text-align: left;
+    }
+
+    input[type="text"], input[type="number"] {
+      width: 90%;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    input[type="text"]:focus, input[type="number"]:focus {
+      border-color: #0b5394;
+      box-shadow: 0 0 0 3px rgba(11, 83, 148, 0.2);
+    }
+
+    button {
+      width: 100%;
+      background: linear-gradient(90deg, #0b5394, #1e3c72);
+      color: #fff;
+      border: none;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      background: linear-gradient(90deg, #1e3c72, #0b5394);
+    }
+
+    footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 14px;
+      color: #64748b;
+    }
+
+    .instructions-box {
+      background: #f1f5f9;
+      border-left: 5px solid #0b5394;
+      padding: 15px 18px;
+      margin: 10px 0 15px 0;
+      border-radius: 10px;
+      font-size: 14px;
+      color: #1f2937;
+      text-align: left;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .instructions-box ul {
+      padding-left: 20px;
+      margin: 5px 0 0 0;
+    }
+
+    .instructions-box li {
+      margin-bottom: 6px;
+      line-height: 1.4;
+      position: relative;
+      padding-left: 22px;
+    }
+
+    .instructions-box li::before {
+      content: "⚠️"; 
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+
+    .instructions-box li:nth-child(1)::before { content: "🖥️"; }
+    .instructions-box li:nth-child(2)::before { content: "🚫"; }
+    .instructions-box li:nth-child(3)::before { content: "⏰"; }
+    .instructions-box li:nth-child(4)::before { content: "❓"; }
+
+    @keyframes fadeIn {
+      from {opacity:0; transform:translateY(10px);}
+      to {opacity:1; transform:translateY(0);}
+    }
+  </style>
 </head>
 <body>
   <div class="container">
-    <h1>Welcome to Symposium Quiz</h1>
+    <h1>University College of Engineering, Arni</h1>
+    <h2>🔥 Erronix🔥 2025</h2>
+    <div class="title-sub">
+      <span class="title-main">MindClash</span>
+      <span class="title-round">Round 1: Easy Level</span>
+    </div>
+
     <form id="login-form">
-      <label>Enter Name:</label>
-      <input type="text" id="username" required>
-      <button type="submit">Start Quiz</button>
+      <label for="participant-id">Participant ID:</label>
+      <input type="number" id="participant-id" placeholder="Enter your ID" required />
+
+      <label for="username">Enter Name:</label>
+      <input type="text" id="username" placeholder="Your full name" required />
+
+      <div class="instructions-box">
+        <p><strong>Instructions for the Quiz:</strong></p>
+        <ul>
+          <li>Press F11 for better experience.</li>
+          <li>Don't switch tabs. Immediate disqualification if switched.</li>
+          <li>Submit before the timer ends - 10 mins.</li>
+          <li>Consists of 20 questions.</li>
+        </ul>
+      </div>
+
+      <button type="submit" id="start-btn">🚀 Start Quiz</button>
     </form>
+
+    <footer>
+      Organized by <strong>Department of Computer Science</strong>
+    </footer>
   </div>
 
   <script>
-    document.getElementById("login-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
+document.getElementById("login-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-      const username = document.getElementById("username").value.trim();
-      if (!username) {
-        alert("Please enter your name.");
-        return;
+  const participantId = document.getElementById("participant-id").value.trim();
+  const username = document.getElementById("username").value.trim();
+
+  if (!participantId || !username) { 
+    alert("Please enter both your Participant ID and Name."); 
+    return; 
+  }
+
+  try {
+    const checkRes = await fetch(`/api/check-participant/${participantId}`);
+    const checkData = await checkRes.json();
+
+    if (checkData.exists) {
+      if (checkData.status === "disqualified") {
+        alert("🚫 This Participant ID is disqualified and cannot attempt the quiz.");
+      } else if (checkData.status === "completed") {
+        alert("✅ This Participant ID has already completed the quiz.");
+      } else {
+        alert("⚠️ This Participant ID is already active in the quiz.");
       }
+      return;
+    }
 
-      try {
-        const res = await fetch("/api/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: username })
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-          localStorage.setItem("participantId", data.participant.id);
-          localStorage.setItem("quizStatus", "active");
-          window.location.href = "/quiz.html";
-        } else {
-          alert("❌ " + data.error);
-        }
-      } catch (err) {
-        console.error("Login error:", err);
-        alert("⚠️ Could not connect to server. Try again later.");
-      }
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: participantId, name: username })
     });
-  </script>
+
+    const data = await res.json();
+    if (!data.success) { alert("❌ " + data.error); return; }
+
+    localStorage.setItem("participant", JSON.stringify({
+      id: data.participant.id,
+      username: data.participant.username
+    }));
+    localStorage.setItem("quizStatus", "active");
+
+    const elem = document.documentElement;
+    try {
+      if (elem.requestFullscreen) await elem.requestFullscreen();
+      else if (elem.webkitRequestFullscreen) await elem.webkitRequestFullscreen();
+      else if (elem.msRequestFullscreen) await elem.msRequestFullscreen();
+    } catch (fsErr) {
+      console.warn("⚠️ Fullscreen failed:", fsErr);
+      alert("For best experience, press F11 to go fullscreen.");
+    }
+
+    window.location.href = "/quiz.html";
+
+  } catch (err) {
+    console.error("Login error:", err);
+    alert("⚠️ Could not connect to server. Try again later.");
+  }
+});
+</script>
+
 </body>
 </html>
