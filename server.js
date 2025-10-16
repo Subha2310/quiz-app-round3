@@ -41,7 +41,6 @@ app.post("/api/login", async (req, res) => {
     if (existing.rows.length > 0) {
       const user = existing.rows[0];
 
-      // Block re-entry after completion/disqualification
       if (["completed", "disqualified"].includes(user.status)) {
         return res.status(400).json({
           success: false,
@@ -52,7 +51,6 @@ app.post("/api/login", async (req, res) => {
       return res.json({ success: true, participant: user });
     }
 
-    // Create a new participant
     const result = await pool.query(
       "INSERT INTO participants (id, username, status, score, created_at) VALUES ($1, $2, 'active', 0, NOW()) RETURNING *",
       [id, name]
@@ -67,7 +65,6 @@ app.post("/api/login", async (req, res) => {
 // ===== CHECK PARTICIPANT ID =====
 app.get("/api/check-participant/:id", async (req, res) => {
   const participantId = req.params.id;
-
   try {
     const participantQuery = await pool.query(
       "SELECT id, status FROM participants WHERE id=$1",
@@ -146,10 +143,11 @@ app.post("/api/submit", async (req, res) => {
     );
 
     if (userCheck.rows.length === 0) {
-      return res.status(400).json({ success: false, error: "Invalid access or already submitted" });
+      return res.status(400).json({ success: false, error: "Participant already submitted or disqualified" });
     }
 
-    const status = "completed"; // treat timeout or manual submit as completed
+    // Only mark completed here, never disqualify
+    const status = "completed";
 
     await calculateScore(participantId, answers, status);
 
@@ -159,48 +157,10 @@ app.post("/api/submit", async (req, res) => {
     );
 
     const { score, created_at, submitted_at } = result.rows[0];
-
     res.json({ success: true, score, created_at, submitted_at });
   } catch (err) {
     console.error("❌ Submission failed:", err);
     res.status(500).json({ success: false, error: "Submission failed. Try again." });
-  }
-});
-
-// ===== TIMEOUT =====
-app.post("/api/timeout", async (req, res) => {
-  const { participantId, answers } = req.body;
-
-  if (!participantId) {
-    return res.status(400).json({ success: false, error: "Invalid timeout" });
-  }
-
-  try {
-    const userCheck = await pool.query(
-      "SELECT * FROM participants WHERE id=$1 AND status='active'",
-      [participantId]
-    );
-
-    if (userCheck.rows.length === 0) {
-      return res.json({ success: false, message: "Already submitted or disqualified" });
-    }
-
-    await calculateScore(participantId, answers || {}, "completed");
-
-    const result = await pool.query(
-      "SELECT score, created_at, submitted_at FROM participants WHERE id=$1",
-      [participantId]
-    );
-
-    res.json({
-      success: true,
-      score: result.rows[0].score,
-      created_at: result.rows[0].created_at,
-      submitted_at: result.rows[0].submitted_at,
-    });
-  } catch (err) {
-    console.error("❌ Timeout submission failed:", err);
-    res.status(500).json({ success: false, error: "Timeout failed" });
   }
 });
 
@@ -211,6 +171,7 @@ app.post("/api/disqualify", async (req, res) => {
     return res.status(400).json({ success: false, error: "Participant ID missing" });
 
   try {
+    // Only disqualify if participant is still active
     const result = await pool.query(
       "UPDATE participants SET status='disqualified', submitted_at=NOW() WHERE id=$1 AND status='active' RETURNING *",
       [participantId]

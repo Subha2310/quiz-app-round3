@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  const BASE_URL = window.location.origin; // Works locally and on Render
+  const BASE_URL = window.location.origin;
   let questions = [];
   let answers = {};
   let totalTime = 10 * 60; // 10 minutes
@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== Render questions =====
   function renderQuestions() {
-    quizForm.innerHTML = ""; // Clear form first
+    quizForm.innerHTML = "";
     questions.forEach((q, index) => {
       const block = document.createElement("div");
       block.className = "question-block";
@@ -55,7 +55,6 @@ document.addEventListener("DOMContentLoaded", () => {
       quizForm.appendChild(block);
     });
 
-    // Add submit bar at the end
     const submitBar = document.createElement("div");
     submitBar.className = "submit-bar";
     submitBar.innerHTML = `<button type="submit">Submit Quiz</button>`;
@@ -93,10 +92,9 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ===== Tab Switch → Disqualify =====
-  let tabSwitched = false;
   window.addEventListener("blur", () => {
-    if (!tabSwitched && !quizEnded) {
-      tabSwitched = true;
+    // Only disqualify if quiz hasn't ended and participant hasn't submitted
+    if (!quizEnded && !localStorage.getItem("quizStatus")) {
       quizEnded = true;
       alert("🚫 You switched tabs. You are disqualified!");
       disqualifyParticipant();
@@ -114,6 +112,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== Submit quiz =====
   async function submitQuiz(timeout = false) {
+    // Prevent multiple submissions
+    if (localStorage.getItem("quizStatus")) return;
+
+    localStorage.setItem(
+      "quizStatus",
+      timeout ? "timeout" : "completed"
+    );
+
     try {
       const res = await fetch(`${BASE_URL}/api/submit`, {
         method: "POST",
@@ -125,14 +131,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }),
       });
       const data = await res.json();
+
       if (data.success) {
         localStorage.setItem("score", data.score);
         localStorage.setItem("createdAt", data.created_at);
         localStorage.setItem("submittedAt", data.submitted_at);
-        localStorage.setItem(
-          "quizStatus",
-          timeout ? "timeout" : "completed"
-        );
       } else {
         localStorage.setItem("quizStatus", "disqualified");
       }
