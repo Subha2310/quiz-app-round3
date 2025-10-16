@@ -10,27 +10,30 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  const BASE_URL = window.location.origin; // Works locally and on Render
   let questions = [];
   let answers = {};
-  let totalTime = 10 * 60; // 10 minutes in seconds
+  let totalTime = 10 * 60; // 10 minutes
   let timerInterval;
   let quizEnded = false;
 
   // ===== Fetch questions =====
-  fetch("/api/questions")
-    .then((res) => res.json())
-    .then((data) => {
-      questions = data;
+  async function fetchQuestions() {
+    try {
+      const res = await fetch(`${BASE_URL}/api/questions`);
+      if (!res.ok) throw new Error("Failed to fetch questions");
+      questions = await res.json();
       renderQuestions();
       startTimer();
-    })
-    .catch((err) => {
-      console.error("Error fetching questions:", err);
+    } catch (err) {
+      console.error("❌ Error fetching questions:", err);
       alert("Failed to load questions. Try refreshing.");
-    });
+    }
+  }
 
   // ===== Render questions =====
   function renderQuestions() {
+    quizForm.innerHTML = ""; // Clear form first
     questions.forEach((q, index) => {
       const block = document.createElement("div");
       block.className = "question-block";
@@ -49,8 +52,14 @@ document.addEventListener("DOMContentLoaded", () => {
             .join("")}
         </div>
       `;
-      quizForm.insertBefore(block, quizForm.querySelector(".submit-bar"));
+      quizForm.appendChild(block);
     });
+
+    // Add submit bar at the end
+    const submitBar = document.createElement("div");
+    submitBar.className = "submit-bar";
+    submitBar.innerHTML = `<button type="submit">Submit Quiz</button>`;
+    quizForm.appendChild(submitBar);
   }
 
   // ===== Timer =====
@@ -70,9 +79,9 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateTimerDisplay() {
     const minutes = Math.floor(totalTime / 60);
     const seconds = totalTime % 60;
-    timerElem.textContent = `⏱ ${minutes
+    timerElem.textContent = `⏱ ${minutes.toString().padStart(2, "0")}:${seconds
       .toString()
-      .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+      .padStart(2, "0")}`;
   }
 
   // ===== Capture answers =====
@@ -103,10 +112,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ===== Submit quiz manually or normally =====
+  // ===== Submit quiz =====
   async function submitQuiz(timeout = false) {
     try {
-      const res = await fetch("/api/submit", {
+      const res = await fetch(`${BASE_URL}/api/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -115,7 +124,6 @@ document.addEventListener("DOMContentLoaded", () => {
           timeout,
         }),
       });
-
       const data = await res.json();
       if (data.success) {
         localStorage.setItem("score", data.score);
@@ -129,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("quizStatus", "disqualified");
       }
     } catch (err) {
-      console.error("Submit error:", err);
+      console.error("❌ Submit error:", err);
       localStorage.setItem("quizStatus", "disqualified");
     } finally {
       window.location.href = "/exit.html";
@@ -145,16 +153,19 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== Disqualify (Tab Switch) =====
   async function disqualifyParticipant() {
     try {
-      await fetch("/api/disqualify", {
+      await fetch(`${BASE_URL}/api/disqualify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ participantId: participant.id }),
       });
       localStorage.setItem("quizStatus", "disqualified");
     } catch (err) {
-      console.error("Disqualify error:", err);
+      console.error("❌ Disqualify error:", err);
     } finally {
       window.location.href = "/exit.html";
     }
   }
+
+  // ===== Start =====
+  fetchQuestions();
 });
