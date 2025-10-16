@@ -7,13 +7,11 @@ const app = express();
 
 // ====== CONFIG ======
 const PORT = process.env.PORT || 5002;
+
+// ====== DATABASE POOL ======
 const pool = new Pool({
-  user: process.env.DB_USER || "postgres",
-  host: process.env.DB_HOST || "localhost",
-  database: process.env.DB_NAME || "quizdb_ythj",
-  password: process.env.DB_PASSWORD || "admin123",
-  port: process.env.DB_PORT || 5432,
-  ssl: process.env.DB_HOST ? { rejectUnauthorized: false } : false,
+  connectionString: process.env.DATABASE_URL, // single URL with host, user, pass, db, port
+  ssl: { rejectUnauthorized: false }          // required for Render Postgres
 });
 
 // ====== MIDDLEWARE ======
@@ -54,7 +52,7 @@ app.post("/api/login", async (req, res) => {
       return res.json({ success: true, participant: user });
     }
 
-    // Create a new participant with created_at timestamp
+    // Create a new participant
     const result = await pool.query(
       "INSERT INTO participants (id, username, status, score, created_at) VALUES ($1, $2, 'active', 0, NOW()) RETURNING *",
       [id, name]
@@ -95,7 +93,6 @@ app.get("/api/questions", async (req, res) => {
       "SELECT id, question, options FROM questions ORDER BY id"
     );
 
-    // Shuffle options for each user
     const questions = result.rows.map((q) => ({
       id: q.id,
       question: q.question,
@@ -109,7 +106,7 @@ app.get("/api/questions", async (req, res) => {
   }
 });
 
-// ===== SCORE CALCULATION (case-insensitive) =====
+// ===== SCORE CALCULATION =====
 const calculateScore = async (participantId, answers, status) => {
   await pool.query(
     `
@@ -143,25 +140,19 @@ app.post("/api/submit", async (req, res) => {
   }
 
   try {
-    // Check if participant exists and is still active
     const userCheck = await pool.query(
       "SELECT * FROM participants WHERE id=$1 AND status='active'",
       [participantId]
     );
 
     if (userCheck.rows.length === 0) {
-      return res
-        .status(400)
-        .json({ success: false, error: "Invalid access or already submitted" });
+      return res.status(400).json({ success: false, error: "Invalid access or already submitted" });
     }
 
-    // Set status depending on timeout or manual submit
-    const status = timeout ? "completed" : "completed"; // treat timeout as completed
+    const status = "completed"; // treat timeout or manual submit as completed
 
-    // Update participant record & calculate score
     await calculateScore(participantId, answers, status);
 
-    // Retrieve score + timestamps for exit page
     const result = await pool.query(
       "SELECT score, created_at, submitted_at FROM participants WHERE id=$1",
       [participantId]
@@ -169,17 +160,10 @@ app.post("/api/submit", async (req, res) => {
 
     const { score, created_at, submitted_at } = result.rows[0];
 
-    res.json({
-      success: true,
-      score,
-      created_at,
-      submitted_at,
-    });
+    res.json({ success: true, score, created_at, submitted_at });
   } catch (err) {
     console.error("❌ Submission failed:", err);
-    res
-      .status(500)
-      .json({ success: false, error: "Submission failed. Try again." });
+    res.status(500).json({ success: false, error: "Submission failed. Try again." });
   }
 });
 
@@ -192,7 +176,6 @@ app.post("/api/timeout", async (req, res) => {
   }
 
   try {
-    // Only process if participant is active
     const userCheck = await pool.query(
       "SELECT * FROM participants WHERE id=$1 AND status='active'",
       [participantId]
@@ -202,10 +185,8 @@ app.post("/api/timeout", async (req, res) => {
       return res.json({ success: false, message: "Already submitted or disqualified" });
     }
 
-    // Calculate score for answered questions and mark as completed
     await calculateScore(participantId, answers || {}, "completed");
 
-    // Fetch updated info
     const result = await pool.query(
       "SELECT score, created_at, submitted_at FROM participants WHERE id=$1",
       [participantId]
@@ -230,14 +211,12 @@ app.post("/api/disqualify", async (req, res) => {
     return res.status(400).json({ success: false, error: "Participant ID missing" });
 
   try {
-    // Only disqualify if participant is still active
     const result = await pool.query(
       "UPDATE participants SET status='disqualified', submitted_at=NOW() WHERE id=$1 AND status='active' RETURNING *",
       [participantId]
     );
 
     if (result.rows.length === 0) {
-      // Already submitted or timed out
       return res.json({ success: false, message: "Participant already submitted or timed out" });
     }
 
@@ -252,11 +231,9 @@ app.post("/api/disqualify", async (req, res) => {
 app.get("/api/participants", async (req, res) => {
   try {
     const result = await pool.query(
-      `
-      SELECT id, username, status, score, submitted_at, created_at
-      FROM participants
-      ORDER BY submitted_at DESC NULLS LAST, id ASC;
-      `
+      `SELECT id, username, status, score, submitted_at, created_at
+       FROM participants
+       ORDER BY submitted_at DESC NULLS LAST, id ASC;`
     );
     res.json(result.rows);
   } catch (err) {
