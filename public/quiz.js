@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let questions = [];
   let answers = {};
-  let totalTime = 10 * 60; // 7 minutes
+  let totalTime = 10 * 60; // 10 minutes
   let timerInterval;
   let quizEnded = false;
   let tabSwitched = false;
@@ -22,7 +22,13 @@ document.addEventListener("DOMContentLoaded", () => {
   fetch("/api/questions")
     .then(res => res.json())
     .then(data => {
-      questions = data;
+      // Parse options correctly
+      questions = data.map(q => ({
+        id: q.id,
+        question: q.question,
+        options: typeof q.options === "string" ? JSON.parse(q.options) : q.options
+      }));
+
       renderQuestions();
       startTimer();
     })
@@ -83,8 +89,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ===== Tab Switch → Disqualify =====
-  window.addEventListener("blur", () => {
-    if (!tabSwitched && !quizEnded && !submitting) {
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && !tabSwitched && !quizEnded && !submitting) {
       tabSwitched = true;
       quizEnded = true;
       alert("🚫 You switched tabs. You are disqualified!");

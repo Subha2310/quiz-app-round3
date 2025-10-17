@@ -1,3 +1,4 @@
+// ===== exit.js =====
 document.addEventListener("DOMContentLoaded", () => {
   const participant = JSON.parse(localStorage.getItem("participant")) || {};
   const score = localStorage.getItem("score") || "0";
@@ -16,12 +17,15 @@ document.addEventListener("DOMContentLoaded", () => {
   nameElem.textContent = participant.username || "Participant";
 
   // Status display
+  statusBox.classList.remove("completed", "timeout", "disqualified");
   if (quizStatus === "completed") {
     statusBox.textContent = "✅ Completed Successfully";
     statusBox.classList.add("completed");
+    scoreRow.classList.remove("hidden");
   } else if (quizStatus === "timeout") {
     statusBox.textContent = "⏰ Time Up";
     statusBox.classList.add("timeout");
+    scoreRow.classList.remove("hidden");
   } else if (quizStatus === "disqualified") {
     statusBox.textContent = "🚫 Disqualified";
     statusBox.classList.add("disqualified");
