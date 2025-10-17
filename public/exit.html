@@ -4,10 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quiz Summary</title>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     body {
       font-family: "Poppins", sans-serif;
@@ -18,46 +15,40 @@
       height: 100vh;
       margin: 0;
     }
+
     .summary-card {
       background: white;
       padding: 30px;
       border-radius: 15px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
       max-width: 420px;
       width: 90%;
       text-align: center;
     }
-    h2 {
-      margin-bottom: 10px;
-    }
+
+    h2 { margin-bottom: 15px; }
+
     .status {
       font-weight: 600;
-      padding: 8px 16px;
+      padding: 10px 18px;
       border-radius: 8px;
       display: inline-block;
       margin: 10px 0;
     }
-    .completed {
-      background: #e3fcef;
-      color: #1b873f;
-    }
-    .timeout {
-      background: #fff4e5;
-      color: #d9822b;
-    }
-    .disqualified {
-      background: #ffe3e3;
-      color: #d32f2f;
-    }
+
+    .completed { background: #e3fcef; color: #1b873f; }
+    .timeout { background: #fff4e5; color: #d9822b; }
+    .disqualified { background: #ffe3e3; color: #d32f2f; }
+
     .info {
       margin: 10px 0;
       font-size: 15px;
     }
-    .hidden {
-      display: none;
-    }
+
+    .hidden { display: none; }
+
     button {
-      background: #007bff;
+      background: #0b5394;
       color: white;
       border: none;
       border-radius: 8px;
@@ -66,15 +57,15 @@
       cursor: pointer;
       margin-top: 15px;
     }
-    button:hover {
-      background: #0056b3;
-    }
+
+    button:hover { background: #083763; }
   </style>
 </head>
+
 <body>
   <div class="summary-card">
     <h2>Quiz Summary</h2>
-    <div id="status-box"></div>
+    <div id="status-box" class="status"></div>
 
     <div class="info"><b>Name:</b> <span id="name">-</span></div>
     <div class="info" id="score-row"><b>Score:</b> <span id="score">-</span></div>
@@ -84,48 +75,6 @@
     <button onclick="window.location.href='/'">Go Home</button>
   </div>
 
-  <script>
-    const participant = JSON.parse(localStorage.getItem("participant")) || {};
-    const score = localStorage.getItem("score") || "0";
-    const createdAt = localStorage.getItem("createdAt");
-    const submittedAt = localStorage.getItem("submittedAt");
-    const quizStatus = localStorage.getItem("quizStatus");
-
-    document.getElementById("name").textContent = participant.username || "Participant";
-
-    const scoreRow = document.getElementById("score-row");
-    const scoreSpan = document.getElementById("score");
-    const statusBox = document.getElementById("status-box");
-
-    // Set status display
-    if (quizStatus === "completed") {
-      statusBox.innerHTML = `<span class="status completed">✅ Completed Successfully</span>`;
-      scoreSpan.textContent = score;
-    } else if (quizStatus === "timeout") {
-      statusBox.innerHTML = `<span class="status timeout">⏰ Time Up</span>`;
-      scoreSpan.textContent = score;
-    } else if (quizStatus === "disqualified") {
-      statusBox.innerHTML = `<span class="status disqualified">🚫 Disqualified</span>`;
-      scoreRow.classList.add("hidden"); // Hide score
-    } else {
-      statusBox.innerHTML = `<span class="status">⚠️ Unknown Status</span>`;
-      scoreRow.classList.add("hidden");
-    }
-
-    // Format time and duration
-    if (createdAt && submittedAt) {
-      const start = new Date(createdAt);
-      const end = new Date(submittedAt);
-      const diffSec = Math.floor((end - start) / 1000);
-      const minutes = Math.floor(diffSec / 60);
-      const seconds = diffSec % 60;
-
-      document.getElementById("submittedAt").textContent = end.toLocaleString();
-      document.getElementById("duration").textContent = `${minutes}m ${seconds}s`;
-    } else {
-      document.getElementById("submittedAt").textContent = "N/A";
-      document.getElementById("duration").textContent = "N/A";
-    }
-  </script>
+  <script src="exit.js"></script>
 </body>
 </html>

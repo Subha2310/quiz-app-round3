@@ -10,14 +10,14 @@ const app = express();
 const PORT = process.env.PORT || 5002;
 
 // ====== MIDDLEWARE ======
-app.use(cors()); // ✅ Enable CORS for frontend requests
+app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 // ====== DATABASE ======
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }, // required for Render Postgres
+  ssl: { rejectUnauthorized: false },
 });
 
 // ====== ROUTES ======
@@ -116,9 +116,9 @@ const calculateScore = async (participantId, answers, status) => {
 
 // ===== SUBMIT ANSWERS =====
 app.post("/api/submit", async (req, res) => {
-  const { participantId, answers } = req.body;
+  const { participantId, answers, status } = req.body;
 
-  if (!participantId || !answers)
+  if (!participantId || !answers || !status)
     return res.status(400).json({ success: false, error: "Invalid access" });
 
   try {
@@ -127,8 +127,8 @@ app.post("/api/submit", async (req, res) => {
     if (userCheck.rows.length === 0)
       return res.status(400).json({ success: false, error: "Participant already submitted or disqualified" });
 
-    // ✅ Mark status as 'completed'
-    await calculateScore(participantId, answers, "completed");
+    // ✅ Mark status based on submission type
+    await calculateScore(participantId, answers, status);
 
     const result = await pool.query(
       "SELECT score, created_at, submitted_at FROM participants WHERE id=$1",
@@ -137,8 +137,13 @@ app.post("/api/submit", async (req, res) => {
 
     res.json({
       success: true,
-      message: "✅ Completed Successfully",
-      status: "completed",
+      message:
+        status === "completed"
+          ? "✅ Completed Successfully"
+          : status === "timeout"
+          ? "⏰ Time Up"
+          : "🚫 Disqualified",
+      status,
       score: result.rows[0].score,
       created_at: result.rows[0].created_at,
       submitted_at: result.rows[0].submitted_at,

@@ -1,9 +1,5 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const participant = JSON.parse(localStorage.getItem("participant"));
-  const quizContainer = document.getElementById("quiz-container");
-  const quizForm = document.getElementById("quiz-form");
-  const timerElem = document.getElementById("timer");
-  const submitBtn = document.getElementById("submit-btn");
 
   if (!participant || !participant.id) {
     alert("❌ No participant info found. Redirecting to registration page.");
@@ -11,8 +7,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
+  const quizContainer = document.getElementById("quiz-container");
+  const quizForm = document.getElementById("quiz-form");
+  const timerElem = document.getElementById("timer");
+
   let disqualified = false;
-  let timeLeft = 300; // 5 minutes
+  let timeLeft = 600; // 10 minutes
   let questions = [];
 
   // ========= Fetch Questions =========
@@ -61,9 +61,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       timeLeft--;
       const minutes = Math.floor(timeLeft / 60);
       const seconds = timeLeft % 60;
-      timerElem.textContent = `${minutes}:${seconds
-        .toString()
-        .padStart(2, "0")}`;
+      timerElem.textContent = `⏱ ${minutes}:${seconds.toString().padStart(2, "0")}`;
     }
   }, 1000);
 
@@ -87,15 +85,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ========= Submit Quiz Function =========
   async function submitQuiz(status) {
-    submitBtn.disabled = true;
-
-    const answers = [];
+    const answersObj = {};
     questions.forEach((q) => {
       const selected = document.querySelector(`input[name="q${q.id}"]:checked`);
-      answers.push({
-        question_id: q.id,
-        answer: selected ? selected.value : null,
-      });
+      answersObj[q.id] = selected ? selected.value : null;
     });
 
     try {
@@ -103,14 +96,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          participant_id: participant.id,
-          answers,
-          status,
+          participantId: participant.id,
+          answers: answersObj,
         }),
       });
 
       const data = await res.json();
-      localStorage.setItem("result", JSON.stringify(data));
+
+      // Save result in localStorage for exit page
+      localStorage.setItem("score", data.score || "0");
+      localStorage.setItem("createdAt", data.created_at || new Date().toISOString());
+      localStorage.setItem("submittedAt", data.submitted_at || new Date().toISOString());
+      localStorage.setItem("quizStatus", status);
+
       window.location.href = "exit.html";
     } catch (err) {
       console.error("Error submitting quiz:", err);
