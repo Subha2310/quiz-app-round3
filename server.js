@@ -91,7 +91,7 @@ app.get("/api/questions", async (req, res) => {
         id: q.id,
         question: q.question,
         correct_answer: q.correct_answer,
-        options: opts
+        options: q.options
       };
     });
     res.json(questions);
