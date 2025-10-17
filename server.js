@@ -79,28 +79,21 @@ app.get("/api/check-participant/:id", async (req, res) => {
 // ===== FETCH QUESTIONS =====
 app.get("/api/questions", async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT id, question, options FROM questions ORDER BY id"
-    );
-
-    const questions = result.rows.map((q) => {
+    const result = await pool.query("SELECT id, question, correct_answer, options FROM questions ORDER BY id ASC");
+    const questions = result.rows.map(q => {
       let opts = [];
-
       try {
-        // Safely parse options if it’s a JSON string
-        opts = q.options ? JSON.parse(q.options) : [];
+        opts = JSON.parse(q.options); // parse string to array
       } catch (err) {
-        console.error("❌ JSON parse error for question ID:", q.id, err);
-        opts = [];
+        console.error(`❌ JSON parse error for question ID: ${q.id}`, err.message);
       }
-
       return {
         id: q.id,
         question: q.question,
-        options: Array.isArray(opts) ? opts : [],
+        correct_answer: q.correct_answer,
+        options: opts
       };
     });
-
     res.json(questions);
   } catch (err) {
     console.error("❌ Fetch questions error:", err);

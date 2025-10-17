@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
       questions = data.map(q => ({
         id: q.id,
         question: q.question,
-        options: Array.isArray(q.options) ? q.options : []
+        options:  JSON.parse(q.options)  // <- parse string to array
       }));
 
       renderQuestions();
