@@ -1,4 +1,4 @@
-// ===== quiz1.js =====
+// ===== quiz.js =====
 document.addEventListener("DOMContentLoaded", () => {
   const participant = JSON.parse(localStorage.getItem("participant"));
   const quizForm = document.getElementById("quiz-form");
@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
   fetch("/api/questions")
     .then(res => res.json())
     .then(data => {
-      // Parse options correctly
+      // Parse options
       questions = data.map(q => ({
         id: q.id,
         question: q.question,
@@ -39,6 +39,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== Render Questions =====
   function renderQuestions() {
+    const submitBar = quizForm.querySelector(".submit-bar");
+    if (!submitBar) {
+      console.error("Submit bar not found in form!");
+      return;
+    }
+
     questions.forEach((q, idx) => {
       const block = document.createElement("div");
       block.className = "question-block";
@@ -53,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
             `).join("")}
         </div>
       `;
-      quizForm.insertBefore(block, quizForm.querySelector(".submit-bar"));
+      quizForm.insertBefore(block, submitBar);
     });
   }
 
@@ -126,7 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("createdAt", data.created_at);
         localStorage.setItem("submittedAt", data.submitted_at);
       } else {
-        // If server rejects submission (already submitted/disqualified)
+        // Server rejects submission (already submitted/disqualified)
         localStorage.setItem("quizStatus", "disqualified");
       }
     } catch (err) {
