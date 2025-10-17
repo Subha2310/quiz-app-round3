@@ -38,12 +38,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // Show score only if not disqualified
   if (quizStatus !== "disqualified") scoreElem.textContent = score;
 
-  // Submitted at
-  submittedElem.textContent = submittedAt ? new Date(submittedAt).toLocaleString() : "N/A";
+ let createdAt = createdAtStr ? new Date(createdAtStr) : null;
+  let submittedAt = submittedAtStr ? new Date(submittedAtStr) : null;
+  submittedElem.textContent = submittedAt ? submittedAt.toLocaleString() : "N/A";
 
   // Duration calculation
-  if (createdAt && submittedAt) {
-    const diffMs = new Date(submittedAt) - new Date(createdAt);
+   if (createdAt && submittedAt && !isNaN(createdAt) && !isNaN(submittedAt)) {
+    const diffMs = submittedAt - createdAt;
     const minutes = Math.floor(diffMs / 60000);
     const seconds = Math.floor((diffMs % 60000) / 1000);
     durationElem.textContent = `${minutes}m ${seconds}s`;

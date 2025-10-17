@@ -105,46 +105,68 @@ app.get("/api/questions", async (req, res) => {
 // ===== SCORE CALCULATION =====
 async function calculateScore(participantId, answers, status) {
   try {
-    // Count correct answers
-    const correctQuery = `
-      SELECT COUNT(*) AS correct_count
-      FROM questions q
-      WHERE q.id = ANY($1::int[])
-        AND LOWER(TRIM(q.correct_answer)) = ANY($2::text[])
-    `;
+    // Ensure answers is an object
+    let parsedAnswers = answers;
+    if (typeof answers === "string") {
+      try {
+        parsedAnswers = JSON.parse(answers);
+      } catch {
+        console.warn("Invalid JSON answers, using empty object");
+        parsedAnswers = {};
+      }
+    }
 
-    const qIds = Object.keys(answers).map((x) => parseInt(x));
-    const ansValues = Object.values(answers).map((v) => v.toLowerCase().trim());
+    // Get all questions from DB
+    const questionRes = await pool.query("SELECT id, correct_answer FROM questions");
+    const questionMap = new Map(questionRes.rows.map(q => [q.id, q.correct_answer.toLowerCase().trim()]));
 
-    const correctResult = await pool.query(correctQuery, [qIds, ansValues]);
-    const correctCount = parseInt(correctResult.rows[0].correct_count) || 0;
+    // Calculate score
+    let score = 0;
+    for (const [qid, ans] of Object.entries(parsedAnswers)) {
+      const correct = questionMap.get(parseInt(qid));
+      if (correct && ans.toLowerCase().trim() === correct) score++;
+    }
 
-    // Update participant
+    // Update participant record
     await pool.query(
-  `UPDATE participants
-   SET score = $2,
-       status = $3,
-       answers = $4::jsonb,
-       submitted_at = NOW()
-   WHERE id = $1 AND status = 'active'`,
-  [participantId, correctCount, status, answers]
-);
+      `UPDATE participants
+       SET score = $2,
+           status = $3,
+           answers = $4::jsonb,
+           submitted_at = NOW()
+       WHERE id = $1 AND status = 'active'`,
+      [participantId, score, status, parsedAnswers]
+    );
 
-
-    return correctCount;
+    return score;
   } catch (err) {
     console.error("Score calculation error:", err);
     throw err;
   }
 }
 
+
 // ===== SUBMIT QUIZ =====
 app.post("/api/submit", async (req, res) => {
   const { participantId, answers, status } = req.body;
+  let parsedAnswers = answers;
+
+  // Validate input
   if (!participantId || !answers || !status)
     return res.status(400).json({ success: false, error: "Invalid request" });
 
+  // Parse answers if it came as JSON string
+  if (typeof answers === "string") {
+    try {
+      parsedAnswers = JSON.parse(answers);
+    } catch (err) {
+      console.warn("Invalid JSON answers");
+      parsedAnswers = {};
+    }
+  }
+
   try {
+    // Ensure participant is active
     const userCheck = await pool.query(
       "SELECT * FROM participants WHERE id=$1 AND status='active'",
       [participantId]
@@ -154,18 +176,40 @@ app.post("/api/submit", async (req, res) => {
         .status(400)
         .json({ success: false, error: "Already submitted or disqualified" });
 
-    const score = await calculateScore(participantId, answers, status);
+    // Fetch correct answers from DB
+    const questionsRes = await pool.query("SELECT id, correct_answer FROM questions");
+    const questionMap = new Map(questionsRes.rows.map(q => [q.id, q.correct_answer]));
 
-    const result = await pool.query(
-      "SELECT score, created_at, submitted_at FROM participants WHERE id=$1",
-      [participantId]
+    // Calculate score
+    let score = 0;
+    for (const [qid, ans] of Object.entries(parsedAnswers)) {
+      const correct = questionMap.get(parseInt(qid));
+      if (correct && ans === correct) score++;
+    }
+
+    // Decide final status for DB
+    const finalStatus =
+      status === "timeout"
+        ? "timeout"
+        : status === "completed"
+        ? "completed"
+        : "disqualified";
+
+    // Update participant record
+    const updateRes = await pool.query(
+      `UPDATE participants
+       SET status=$1, score=$2, submitted_at=NOW()
+       WHERE id=$3
+       RETURNING score, created_at, submitted_at`,
+      [finalStatus, score, participantId]
     );
 
     res.json({
       success: true,
-      score: result.rows[0].score,
-      created_at: result.rows[0].created_at,
-      submitted_at: result.rows[0].submitted_at,
+      score: updateRes.rows[0].score,
+      created_at: updateRes.rows[0].created_at,
+      submitted_at: updateRes.rows[0].submitted_at,
+      status: finalStatus,
     });
   } catch (err) {
     console.error("Submit quiz error:", err);
