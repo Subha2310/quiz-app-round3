@@ -22,11 +22,10 @@ document.addEventListener("DOMContentLoaded", () => {
   fetch("/api/questions")
     .then(res => res.json())
     .then(data => {
-      // Parse options
       questions = data.map(q => ({
         id: q.id,
         question: q.question,
-        options:  q.options  // Already an array
+        options: Array.isArray(q.options) ? q.options : []
       }));
 
       renderQuestions();
@@ -108,6 +107,12 @@ document.addEventListener("DOMContentLoaded", () => {
   quizForm.addEventListener("submit", (e) => {
     e.preventDefault();
     if (submitting) return; // prevent multiple clicks
+
+    // Optional: warn if some questions are unanswered
+    if (Object.keys(answers).length < questions.length) {
+      if (!confirm("Some questions are unanswered. Submit anyway?")) return;
+    }
+
     submitting = true;
     submitQuiz(false);
   });
@@ -123,16 +128,16 @@ document.addEventListener("DOMContentLoaded", () => {
           status: timeout ? "timeout" : "completed",
         }),
       });
+
       const data = await res.json();
 
       if (data.success) {
-        // Store all data for exit page
         localStorage.setItem("score", data.score);
         localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
         localStorage.setItem("createdAt", data.created_at);
         localStorage.setItem("submittedAt", data.submitted_at);
       } else {
-        // Server rejects submission (already submitted/disqualified)
+        // Already disqualified or submitted
         localStorage.setItem("quizStatus", "disqualified");
       }
     } catch (err) {

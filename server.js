@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import { Pool } from "pg";
 import bodyParser from "body-parser";
 import cors from "cors";
+import pkg from "pg";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,7 +21,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // ===== Database Pool =====
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || "postgresql://postgres:admin123@localhost:5432/quizdb",
+  connectionString:"postgres://quizdb_ythj_user:ZSxMaEGmYb0SLuuYmoG6Rpo68MYpt2fD@dpg-d3igemali9vc73eqnafg-a.oregon-postgres.render.com:5432/quizdb_ythj",
   ssl: process.env.DATABASE_URL
     ? { rejectUnauthorized: false } // ✅ for Render
     : false, // ✅ disable SSL locally
