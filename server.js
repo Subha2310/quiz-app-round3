@@ -108,9 +108,9 @@ async function calculateScore(participantId, answers, status) {
     // Count correct answers
     const correctQuery = `
       SELECT COUNT(*) AS correct_count
-      FROM correct_answers c
-      WHERE c.question_id = ANY($1::int[])
-        AND LOWER(TRIM(c.answer)) = ANY($2::text[])
+      FROM questions q
+      WHERE q.id = ANY($1::int[])
+        AND LOWER(TRIM(q.correct_answer)) = ANY($2::text[])
     `;
 
     const qIds = Object.keys(answers).map((x) => parseInt(x));
@@ -123,7 +123,7 @@ async function calculateScore(participantId, answers, status) {
     await pool.query(
       `UPDATE participants
        SET score=$2, status=$3, answers=$4::jsonb, submitted_at=NOW()
-       WHERE id=$1`,
+       WHERE id=$1`AND status='active'`,
       [participantId, correctCount, status, answers]
     );
 

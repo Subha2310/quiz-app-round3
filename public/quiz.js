@@ -106,66 +106,75 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ===== Submit Quiz =====
-  quizForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    if (submitting) return; // prevent multiple clicks
+quizForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (submitting || quizEnded) return;
 
-    // Optional: warn if some questions are unanswered
-    if (Object.keys(answers).length < questions.length) {
-      if (!confirm("Some questions are unanswered. Submit anyway?")) return;
-    }
-
-    submitting = true;
-    submitQuiz(false);
-  });
-
-  async function submitQuiz(timeout = false) {
-    try {
-      const res = await fetch("/api/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          participantId: participant.id,
-          answers,
-          status: timeout ? "timeout" : "completed",
-        }),
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        localStorage.setItem("score", data.score);
-        localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
-        localStorage.setItem("createdAt", data.created_at);
-        localStorage.setItem("submittedAt", data.submitted_at);
-      } else {
-        // Already disqualified or submitted
-        localStorage.setItem("quizStatus", "disqualified");
-      }
-    } catch (err) {
-      console.error("Submit error:", err);
-      localStorage.setItem("quizStatus", "disqualified");
-    } finally {
-      quizEnded = true;
-      window.location.href = "/exit.html";
-    }
+  if (Object.keys(answers).length < questions.length) {
+    if (!confirm("Some questions are unanswered. Submit anyway?")) return;
   }
+
+  submitting = true;
+  quizEnded = true;
+  submitQuiz(false); // manual submit
+});
+
+// ===== Submit Quiz API =====
+async function submitQuiz(timeout = false) {
+  try {
+    const res = await fetch("/api/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        participantId: participant.id,
+        answers,
+        status: timeout ? "timeout" : "completed",
+      }),
+    });
+
+    const data = await res.json();
+    console.log("Submit response:", data);
+
+    if (data.success) {
+      localStorage.setItem("score", data.score);
+      localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
+      localStorage.setItem("createdAt", data.created_at);
+      localStorage.setItem("submittedAt", data.submitted_at);
+    } else {
+      console.warn("Unexpected response:", data);
+      localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
+    }
+  } catch (err) {
+    console.error("Submit error:", err);
+    localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
+  } finally {
+    submitting = false;
+    quizEnded = true;
+    window.location.href = "/exit.html";
+  }
+}
+
 
   // ===== Disqualify Participant =====
   async function disqualifyParticipant() {
-    try {
-      await fetch("/api/disqualify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ participantId: participant.id }),
-      });
-      localStorage.setItem("quizStatus", "disqualified");
-    } catch (err) {
-      console.error("Disqualify error:", err);
-    } finally {
-      window.location.href = "/exit.html";
-    }
+  if (quizEnded || submitting) return;
+  quizEnded = true;
+  submitting = true;
+
+  try {
+    await fetch("/api/disqualify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ participantId: participant.id }),
+    });
+    localStorage.setItem("quizStatus", "disqualified");
+  } catch (err) {
+    console.error("Disqualify error:", err);
+  } finally {
+    window.location.href = "/exit.html";
   }
+}
+
 
   // ===== Handle Timeout =====
   function handleTimeout() {
