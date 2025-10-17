@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const statusBox = document.getElementById("status-box");
   const scoreRow = document.getElementById("score-row");
 
+  // Set participant name
   nameElem.textContent = participant.username || "Participant";
 
   // Status display
@@ -24,19 +25,19 @@ document.addEventListener("DOMContentLoaded", () => {
   } else if (quizStatus === "disqualified") {
     statusBox.textContent = "🚫 Disqualified";
     statusBox.classList.add("disqualified");
-    scoreRow.classList.add("hidden");
+    scoreRow.classList.add("hidden"); // Hide score
   } else {
     statusBox.textContent = "⚠️ Unknown Status";
     scoreRow.classList.add("hidden");
   }
 
-  // Score
+  // Show score only if not disqualified
   if (quizStatus !== "disqualified") scoreElem.textContent = score;
 
   // Submitted at
   submittedElem.textContent = submittedAt ? new Date(submittedAt).toLocaleString() : "N/A";
 
-  // Duration
+  // Duration calculation
   if (createdAt && submittedAt) {
     const diffMs = new Date(submittedAt) - new Date(createdAt);
     const minutes = Math.floor(diffMs / 60000);
