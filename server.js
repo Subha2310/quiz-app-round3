@@ -80,13 +80,22 @@ app.get("/api/questions", async (req, res) => {
       "SELECT id, question, options FROM questions ORDER BY id"
     );
 
-    const questions = result.rows.map((q) => ({
-      id: q.id,
-      question: q.question,
-      options: Array.isArray(q.options)
-        ? [...q.options].sort(() => Math.random() - 0.5)
-        : JSON.parse(q.options),
-    }));
+    const questions = result.rows.map(q => {
+      // Parse options from JSON string
+      let opts = [];
+      if (typeof q.options === "string") {
+        opts = JSON.parse(q.options);
+      }
+
+      // Shuffle options randomly
+      opts.sort(() => Math.random() - 0.5);
+
+      return {
+        id: q.id,
+        question: q.question,
+        options: opts
+      };
+    });
 
     res.json(questions);
   } catch (err) {
@@ -94,6 +103,7 @@ app.get("/api/questions", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch questions" });
   }
 });
+
 
 // ===== SCORE CALCULATION =====
 async function calculateScore(participantId, answers, status) {
