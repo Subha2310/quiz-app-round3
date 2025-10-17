@@ -10,7 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT; 
+const PORT = process.env.PORT || 10000;
 
 
 // ===== Middleware =====
@@ -20,8 +20,10 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // ===== Database Pool =====
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  connectionString: process.env.DATABASE_URL || "postgresql://postgres:admin123@localhost:5432/quizdb",
+  ssl: process.env.DATABASE_URL
+    ? { rejectUnauthorized: false } // ✅ for Render
+    : false, // ✅ disable SSL locally
 });
 
 // ===== HOME =====
@@ -80,19 +82,30 @@ app.get("/api/questions", async (req, res) => {
       "SELECT id, question, options FROM questions ORDER BY id"
     );
 
-    const questions = result.rows.map(q => ({
-      id: q.id,
-      question: q.question,
-      options: JSON.parse(q.options)  // Always parse JSON string
-    }));
+    const questions = result.rows.map((q) => {
+      let opts = [];
+
+      try {
+        // Safely parse options if it’s a JSON string
+        opts = q.options ? JSON.parse(q.options) : [];
+      } catch (err) {
+        console.error("❌ JSON parse error for question ID:", q.id, err);
+        opts = [];
+      }
+
+      return {
+        id: q.id,
+        question: q.question,
+        options: Array.isArray(opts) ? opts : [],
+      };
+    });
 
     res.json(questions);
   } catch (err) {
-    console.error("Fetch questions error:", err);
+    console.error("❌ Fetch questions error:", err);
     res.status(500).json({ error: "Failed to fetch questions" });
   }
 });
-
 
 
 // ===== SCORE CALCULATION =====
