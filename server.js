@@ -121,11 +121,15 @@ async function calculateScore(participantId, answers, status) {
 
     // Update participant
     await pool.query(
-      `UPDATE participants
-       SET score=$2, status=$3, answers=$4::jsonb, submitted_at=NOW()
-       WHERE id=$1`AND status='active'`,
-      [participantId, correctCount, status, answers]
-    );
+  `UPDATE participants
+   SET score = $2,
+       status = $3,
+       answers = $4::jsonb,
+       submitted_at = NOW()
+   WHERE id = $1 AND status = 'active'`,
+  [participantId, correctCount, status, answers]
+);
+
 
     return correctCount;
   } catch (err) {
