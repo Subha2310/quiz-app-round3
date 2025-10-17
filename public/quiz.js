@@ -34,6 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
     .catch(err => {
       console.error("Error fetching questions:", err);
       alert("Failed to load questions. Refresh the page.");
+      console.log(data);
     });
 
   // ===== Render Questions =====
@@ -59,6 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       `;
       quizForm.insertBefore(block, submitBar);
+      console.log("Rendering question", q.id, q.question, q.options);
     });
   }
 
