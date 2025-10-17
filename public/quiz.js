@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let questions = [];
   let answers = {};
-  let totalTime = 7 * 60; // 7 minutes
+  let totalTime = 10 * 60; // 7 minutes
   let timerInterval;
   let quizEnded = false;
   let tabSwitched = false;

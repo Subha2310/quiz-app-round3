@@ -10,7 +10,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 5002;
+const PORT = process.env.PORT; // do not fallback to another port
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+
 
 // ===== Middleware =====
 app.use(cors());
