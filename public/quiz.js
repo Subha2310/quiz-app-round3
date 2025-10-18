@@ -28,6 +28,13 @@ document.addEventListener("DOMContentLoaded", () => {
         options: q.options // parse string if necessary
       }));
       renderQuestions();
+   
+
+      // ✅ Set createdAt when quiz actually starts
+    if (!localStorage.getItem("createdAt")) {
+      localStorage.setItem("createdAt", new Date().toISOString());
+    }
+
       startTimer();
     })
     .catch(err => {
