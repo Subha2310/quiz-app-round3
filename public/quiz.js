@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
       questions = data.map(q => ({
         id: q.id,
         question: q.question,
-        options: q.options
+        options: q.options   <- parse string to array
       }));
       renderQuestions();
       startTimer();
@@ -33,6 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
     .catch(err => {
       console.error("Error fetching questions:", err);
       alert("Failed to load questions. Refresh the page.");
+      console.log(data);
     });
 
   // ===== Render Questions =====
@@ -189,6 +190,7 @@ document.addEventListener("visibilitychange", () => {
 
 // Trigger when window loses focus (Alt+Tab, clicking outside)
 window.addEventListener("blur", handleDisqualification);
+
 
   // ===== Handle Timeout =====
   function handleTimeout() {
