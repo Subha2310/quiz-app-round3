@@ -172,13 +172,14 @@ async function submitQuiz(timeout = false) {
 }
 
 
-  // ===== Disqualify Participant =====
-  async function disqualifyParticipant() {
+ // ===== Disqualify Participant =====
+async function disqualifyParticipant() {
   if (quizEnded || submitting) return;
   quizEnded = true;
   submitting = true;
 
   try {
+    const participant = JSON.parse(localStorage.getItem("participant"));
     await fetch("/api/disqualify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -191,6 +192,33 @@ async function submitQuiz(timeout = false) {
     window.location.href = "/exit.html";
   }
 }
+
+// ===== Tab Switch / Window Blur → Disqualify =====
+function handleDisqualification() {
+  if (!tabSwitched && !quizEnded && !submitting) {
+    tabSwitched = true;
+    quizEnded = true;
+    alert("🚫 You switched tabs or left the application. You are disqualified!");
+
+    // Mark in localStorage
+    localStorage.setItem("quizStatus", "disqualified");
+    localStorage.setItem("submittedAt", new Date().toISOString());
+
+    // Stop timer
+    if (window.timerInterval) clearInterval(window.timerInterval);
+
+    // Call backend disqualification
+    disqualifyParticipant();
+  }
+}
+
+// Listen for tab switching / hiding the page
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) handleDisqualification();
+});
+
+// Listen for window losing focus (Alt+Tab, minimize, clicking outside)
+window.addEventListener("blur", handleDisqualification);
 
 
   // ===== Handle Timeout =====
