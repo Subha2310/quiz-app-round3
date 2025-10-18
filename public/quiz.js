@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  // ===== State Variables =====
   let questions = [];
   let answers = {};
   let totalTime = 10 * 60; // 10 minutes
@@ -25,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
       questions = data.map(q => ({
         id: q.id,
         question: q.question,
-        options: q.options   <- parse string to array
+        options: q.options // should already be an array
       }));
       renderQuestions();
       startTimer();
@@ -33,7 +34,6 @@ document.addEventListener("DOMContentLoaded", () => {
     .catch(err => {
       console.error("Error fetching questions:", err);
       alert("Failed to load questions. Refresh the page.");
-      console.log(data);
     });
 
   // ===== Render Questions =====
@@ -47,12 +47,11 @@ document.addEventListener("DOMContentLoaded", () => {
       block.innerHTML = `
         <h3>Q${idx + 1}. ${q.question}</h3>
         <div class="options">
-          ${q.options
-            .map(opt => `
-              <label class="option">
-                <input type="radio" name="q${q.id}" value="${opt}" /> ${opt}
-              </label>
-            `).join("")}
+          ${q.options.map(opt => `
+            <label class="option">
+              <input type="radio" name="q${q.id}" value="${opt}" /> ${opt}
+            </label>
+          `).join("")}
         </div>
       `;
       quizForm.insertBefore(block, submitBar);
@@ -131,66 +130,46 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ===== Quiz.js: Disqualification Logic =====
-let tabSwitched = false;
-let quizEnded = false;
-let submitting = false;
-
-// Redirect to exit page
-function redirectToExit() {
-  window.location.href = "/exit.html";
-}
-
-// ===== Disqualify Participant =====
-async function disqualifyParticipant() {
-  if (quizEnded || submitting) return;
-  quizEnded = true;
-  submitting = true;
-
-  try {
-    // Update backend
-    await fetch("/api/disqualify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ participantId: participant.id }),
-    });
-
-    // Update localStorage
-    localStorage.setItem("quizStatus", "disqualified");
-    localStorage.setItem("submittedAt", new Date().toISOString());
-  } catch (err) {
-    console.error("Disqualify error:", err);
-  } finally {
-    // Redirect to exit page
-    redirectToExit();
-  }
-}
-
-// ===== Handle Tab Switch / Window Blur =====
-function handleDisqualification() {
-  if (!tabSwitched && !quizEnded && !submitting) {
-    tabSwitched = true;
+  // ===== Disqualify Participant =====
+  async function disqualifyParticipant() {
+    if (quizEnded || submitting) return;
     quizEnded = true;
+    submitting = true;
 
-    alert("🚫 You switched tabs, minimized, or left the application. You are disqualified!");
-
-    // Stop quiz timer
-    if (window.timerInterval) clearInterval(window.timerInterval);
-
-    // Call disqualify function
-    disqualifyParticipant();
+    try {
+      await fetch("/api/disqualify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ participantId: participant.id }),
+      });
+      localStorage.setItem("quizStatus", "disqualified");
+      localStorage.setItem("submittedAt", new Date().toISOString());
+    } catch (err) {
+      console.error("Disqualify error:", err);
+    } finally {
+      redirectToExit();
+    }
   }
-}
 
-// ===== Event Listeners =====
-// Trigger when page is hidden (tab switch / minimize)
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden) handleDisqualification();
-});
+  // ===== Handle Tab Switch / Window Blur =====
+  function handleDisqualification() {
+    if (!tabSwitched && !quizEnded && !submitting) {
+      tabSwitched = true;
+      quizEnded = true;
 
-// Trigger when window loses focus (Alt+Tab, clicking outside)
-window.addEventListener("blur", handleDisqualification);
+      alert("🚫 You switched tabs, minimized, or left the application. You are disqualified!");
 
+      if (timerInterval) clearInterval(timerInterval);
+      disqualifyParticipant();
+    }
+  }
+
+  // ===== Event Listeners for Disqualification =====
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) handleDisqualification();
+  });
+
+  window.addEventListener("blur", handleDisqualification);
 
   // ===== Handle Timeout =====
   function handleTimeout() {
