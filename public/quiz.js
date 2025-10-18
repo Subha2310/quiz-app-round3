@@ -130,45 +130,65 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ===== Disqualify Participant =====
-  async function disqualifyParticipant() {
-    if (quizEnded || submitting) return;
+  // ===== Quiz.js: Disqualification Logic =====
+let tabSwitched = false;
+let quizEnded = false;
+let submitting = false;
+
+// Redirect to exit page
+function redirectToExit() {
+  window.location.href = "/exit.html";
+}
+
+// ===== Disqualify Participant =====
+async function disqualifyParticipant() {
+  if (quizEnded || submitting) return;
+  quizEnded = true;
+  submitting = true;
+
+  try {
+    // Update backend
+    await fetch("/api/disqualify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ participantId: participant.id }),
+    });
+
+    // Update localStorage
+    localStorage.setItem("quizStatus", "disqualified");
+    localStorage.setItem("submittedAt", new Date().toISOString());
+  } catch (err) {
+    console.error("Disqualify error:", err);
+  } finally {
+    // Redirect to exit page
+    redirectToExit();
+  }
+}
+
+// ===== Handle Tab Switch / Window Blur =====
+function handleDisqualification() {
+  if (!tabSwitched && !quizEnded && !submitting) {
+    tabSwitched = true;
     quizEnded = true;
-    submitting = true;
 
-    try {
-      await fetch("/api/disqualify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ participantId: participant.id }),
-      });
-      localStorage.setItem("quizStatus", "disqualified");
-      localStorage.setItem("submittedAt", new Date().toISOString());
-    } catch (err) {
-      console.error("Disqualify error:", err);
-    } finally {
-      redirectToExit();
-    }
+    alert("🚫 You switched tabs, minimized, or left the application. You are disqualified!");
+
+    // Stop quiz timer
+    if (window.timerInterval) clearInterval(window.timerInterval);
+
+    // Call disqualify function
+    disqualifyParticipant();
   }
+}
 
-  // ===== Handle Tab Switch / Window Blur =====
-  function handleDisqualification() {
-    if (!tabSwitched && !quizEnded && !submitting) {
-      tabSwitched = true;
-      quizEnded = true;
+// ===== Event Listeners =====
+// Trigger when page is hidden (tab switch / minimize)
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) handleDisqualification();
+});
 
-      alert("🚫 You switched tabs or left the application. You are disqualified!");
-
-      if (window.timerInterval) clearInterval(window.timerInterval);
-      disqualifyParticipant();
-    }
-  }
-
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) handleDisqualification();
-  });
-
-  window.addEventListener("blur", handleDisqualification);
+// Trigger when window loses focus (Alt+Tab, clicking outside)
+window.addEventListener("blur", handleDisqualification);
 
   // ===== Handle Timeout =====
   function handleTimeout() {
