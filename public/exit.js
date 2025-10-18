@@ -2,8 +2,8 @@
 document.addEventListener("DOMContentLoaded", () => {
   const participant = JSON.parse(localStorage.getItem("participant")) || {};
   const score = localStorage.getItem("score") || "0";
-  const createdAt = localStorage.getItem("createdAt");
-  const submittedAt = localStorage.getItem("submittedAt");
+  const createdAtStr = localStorage.getItem("createdAt");
+  const submittedAtStr = localStorage.getItem("submittedAt");
   const quizStatus = localStorage.getItem("quizStatus");
 
   const nameElem = document.getElementById("name");
@@ -13,10 +13,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const statusBox = document.getElementById("status-box");
   const scoreRow = document.getElementById("score-row");
 
-  // Set participant name
+  // ✅ Set participant name
   nameElem.textContent = participant.username || "Participant";
 
-  // Status display
+  // ✅ Status display
   statusBox.classList.remove("completed", "timeout", "disqualified");
   if (quizStatus === "completed") {
     statusBox.textContent = "✅ Completed Successfully";
@@ -29,21 +29,25 @@ document.addEventListener("DOMContentLoaded", () => {
   } else if (quizStatus === "disqualified") {
     statusBox.textContent = "🚫 Disqualified";
     statusBox.classList.add("disqualified");
-    scoreRow.classList.add("hidden"); // Hide score
+    scoreRow.classList.add("hidden");
   } else {
     statusBox.textContent = "⚠️ Unknown Status";
     scoreRow.classList.add("hidden");
   }
 
-  // Show score only if not disqualified
+  // ✅ Show score only if not disqualified
   if (quizStatus !== "disqualified") scoreElem.textContent = score;
 
- let createdAt = createdAtStr ? new Date(createdAtStr) : null;
-  let submittedAt = submittedAtStr ? new Date(submittedAtStr) : null;
-  submittedElem.textContent = submittedAt ? submittedAt.toLocaleString() : "N/A";
+  // ✅ Parse timestamps correctly
+  const createdAt = createdAtStr ? new Date(createdAtStr) : null;
+  const submittedAt = submittedAtStr ? new Date(submittedAtStr) : null;
 
-  // Duration calculation
-   if (createdAt && submittedAt && !isNaN(createdAt) && !isNaN(submittedAt)) {
+  submittedElem.textContent = submittedAt
+    ? submittedAt.toLocaleString()
+    : "N/A";
+
+  // ✅ Duration calculation
+  if (createdAt && submittedAt && !isNaN(createdAt) && !isNaN(submittedAt)) {
     const diffMs = submittedAt - createdAt;
     const minutes = Math.floor(diffMs / 60000);
     const seconds = Math.floor((diffMs % 60000) / 1000);
@@ -52,6 +56,6 @@ document.addEventListener("DOMContentLoaded", () => {
     durationElem.textContent = "N/A";
   }
 
-  // Clear only temporary answers (keep score and timestamps for display)
+  // ✅ Clear temporary data
   localStorage.removeItem("answers");
 });
