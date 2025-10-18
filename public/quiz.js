@@ -96,14 +96,31 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ===== Tab Switch → Disqualify =====
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden && !tabSwitched && !quizEnded && !submitting) {
-      tabSwitched = true;
-      quizEnded = true;
-      alert("🚫 You switched tabs. You are disqualified!");
-      disqualifyParticipant();
-    }
-  });
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && !tabSwitched && !quizEnded && !submitting) {
+    tabSwitched = true;
+    quizEnded = true;
+
+    alert("🚫 You switched tabs. You are disqualified!");
+
+    // Mark in localStorage
+    localStorage.setItem("quizStatus", "disqualified");
+    localStorage.setItem("submittedAt", new Date().toISOString());
+
+    // Stop timer cleanly
+    if (window.timerInterval) clearInterval(window.timerInterval);
+
+    // Call existing backend disqualification logic
+    disqualifyParticipant().then(() => {
+      // ✅ After updating DB, go to exit page
+      window.location.href = "exit.html";
+    }).catch(() => {
+      // Even if backend call fails, still go to exit page
+      window.location.href = "exit.html";
+    });
+  }
+});
+
 
   // ===== Submit Quiz =====
 quizForm.addEventListener("submit", (e) => {
