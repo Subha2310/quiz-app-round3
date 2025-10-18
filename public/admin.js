@@ -15,12 +15,15 @@ async function loadParticipants() {
         <th>Status</th>
         <th>Score</th>
         <th>Submitted At</th>
+        <th>Duration</th>
       </tr>
     `;
 
 participants.forEach((p) => {
   // Format date safely
   let formattedDate = "—";
+  let duration = "—";
+
   if (p.submitted_at) {
     const timestamp = new Date(p.submitted_at); // now valid
     if (!isNaN(timestamp)) {
@@ -32,15 +35,31 @@ participants.forEach((p) => {
         minute: "2-digit",
         hour12: true,
       };
-      formattedDate = timestamp.toLocaleString("en-GB", options).replace(",", "");
+      formattedDate = submitted
+        .toLocaleString("en-GB", options)
+        .replace(",", "");
     }
   }
+ // ===== Calculate duration =====
+      if (p.created_at && p.submitted_at) {
+        const created = new Date(p.created_at);
+        const submitted = new Date(p.submitted_at);
+        if (!isNaN(created) && !isNaN(submitted)) {
+          const diffMs = submitted - created;
+          const minutes = Math.floor(diffMs / 60000);
+          const seconds = Math.floor((diffMs % 60000) / 1000);
+          duration = `${minutes}m ${seconds}s`;
+        }
+      }
 
   // Status badge
-  let statusBadge = "Active";
+  let statusBadge = "";
   let badgeColor = "gray";
+
   if (p.status) {
-    switch (p.status.toLowerCase()) {
+     const normalizedStatus = p.status.trim().toLowerCase();
+ 
+    switch (normalizedStatus) {
       case "completed":
         statusBadge = "Completed";
         badgeColor = "green";
@@ -54,7 +73,7 @@ participants.forEach((p) => {
         badgeColor = "orange";
         break;
       default:
-        statusBadge = p.status.charAt(0).toUpperCase() + p.status.slice(1);
+        statusBadge = normalizedStatus.charAt(0).toUpperCase() + p.status.slice(1);
     }
   }
 
@@ -65,6 +84,7 @@ participants.forEach((p) => {
       <td><span style="color:white; background-color:${badgeColor}; padding:2px 6px; border-radius:4px;">${statusBadge}</span></td>
       <td>${p.score ?? 0}</td>
       <td>${formattedDate}</td>
+      <td>${duration}</td>
     </tr>
   `;
 });

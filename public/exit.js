@@ -38,13 +38,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // ✅ Show score only if not disqualified
   if (quizStatus !== "disqualified") scoreElem.textContent = score;
 
-  // ✅ Parse timestamps correctly
-  const createdAt = createdAtStr ? new Date(createdAtStr) : null;
-  const submittedAt = submittedAtStr ? new Date(submittedAtStr) : null;
+  let createdAt = createdAtStr ? new Date(createdAtStr) : null;
+  let submittedAt = submittedAtStr ? new Date(submittedAtStr) : new Date();
 
-  submittedElem.textContent = submittedAt
-    ? submittedAt.toLocaleString()
-    : "N/A";
 
   // ✅ Duration calculation
   if (createdAt && submittedAt && !isNaN(createdAt) && !isNaN(submittedAt)) {
