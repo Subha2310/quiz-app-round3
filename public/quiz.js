@@ -10,7 +10,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // ===== State Variables =====
   let questions = [];
   let answers = {};
   let totalTime = 10 * 60; // 10 minutes
@@ -26,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
       questions = data.map(q => ({
         id: q.id,
         question: q.question,
-        options: q.options // should already be an array
+        options: q.options // parse string if necessary
       }));
       renderQuestions();
       startTimer();
@@ -47,11 +46,12 @@ document.addEventListener("DOMContentLoaded", () => {
       block.innerHTML = `
         <h3>Q${idx + 1}. ${q.question}</h3>
         <div class="options">
-          ${q.options.map(opt => `
-            <label class="option">
-              <input type="radio" name="q${q.id}" value="${opt}" /> ${opt}
-            </label>
-          `).join("")}
+          ${q.options
+            .map(opt => `
+              <label class="option">
+                <input type="radio" name="q${q.id}" value="${opt}" /> ${opt}
+              </label>
+            `).join("")}
         </div>
       `;
       quizForm.insertBefore(block, submitBar);
@@ -67,7 +67,6 @@ document.addEventListener("DOMContentLoaded", () => {
       updateTimerDisplay();
       if (totalTime <= 0) {
         clearInterval(timerInterval);
-        quizEnded = true;
         handleTimeout();
       }
     }, 1000);
@@ -115,9 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       const data = await res.json();
-      if (data.success) {
-        localStorage.setItem("score", data.score);
-      }
+      if (data.success) localStorage.setItem("score", data.score);
       localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
       localStorage.setItem("submittedAt", data.submitted_at || new Date().toISOString());
     } catch (err) {
@@ -130,17 +127,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ===== Disqualify Participant =====
+  // ===== Handle Timeout =====
+  function handleTimeout() {
+    alert("⏰ Time's up! Submitting your quiz automatically...");
+    submitQuiz(true);
+  }
+
+  // ===== Disqualification =====
   async function disqualifyParticipant() {
     if (quizEnded || submitting) return;
-    quizEnded = true;
+
     submitting = true;
+    quizEnded = true;
 
     try {
       await fetch("/api/disqualify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ participantId: participant.id }),
+        body: JSON.stringify({ participantId: participant.id })
       });
       localStorage.setItem("quizStatus", "disqualified");
       localStorage.setItem("submittedAt", new Date().toISOString());
@@ -155,29 +159,19 @@ document.addEventListener("DOMContentLoaded", () => {
   function handleDisqualification() {
     if (!tabSwitched && !quizEnded && !submitting) {
       tabSwitched = true;
-      quizEnded = true;
-
       alert("🚫 You switched tabs, minimized, or left the application. You are disqualified!");
-
-      if (timerInterval) clearInterval(timerInterval);
+      if (window.timerInterval) clearInterval(window.timerInterval);
       disqualifyParticipant();
     }
   }
 
-  // ===== Event Listeners for Disqualification =====
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) handleDisqualification();
   });
 
   window.addEventListener("blur", handleDisqualification);
 
-  // ===== Handle Timeout =====
-  function handleTimeout() {
-    alert("⏰ Time's up! Submitting your quiz automatically...");
-    submitQuiz(true);
-  }
-
-  // ===== Redirect to Exit Page =====
+  // ===== Redirect =====
   function redirectToExit() {
     window.location.href = "/exit.html";
   }
