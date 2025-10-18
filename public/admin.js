@@ -1,35 +1,48 @@
+// ===== admin.js =====
 async function loadParticipants() {
-  const table = document.getElementById("participants-table");
-
-  table.innerHTML = `
-    <tr>
-      <th>ID</th>
-      <th>Username</th>
-      <th>Status</th>
-      <th>Score</th>
-      <th>Submitted At</th>
-      <th>Duration</th>
-    </tr>
-  `;
-
   try {
     const res = await fetch("/api/participants");
+    if (!res.ok) throw new Error("Failed to fetch participants");
+    let participants = await res.json();
 
-    if (!res.ok) {
-      // HTTP error (404, 500, etc)
-      throw new Error(`HTTP error ${res.status}`);
-    }
+    // ===== Sort participants: by score descending, then duration ascending =====
+    participants.sort((a, b) => {
+      // Sort by score descending
+      const scoreDiff = (b.score || 0) - (a.score || 0);
+      if (scoreDiff !== 0) return scoreDiff;
 
-    const participants = await res.json();
+      // If scores are equal, sort by duration ascending
+      const durationA = a.created_at && a.submitted_at
+        ? new Date(a.submitted_at) - new Date(a.created_at)
+        : Infinity;
+      const durationB = b.created_at && b.submitted_at
+        ? new Date(b.submitted_at) - new Date(b.created_at)
+        : Infinity;
+
+      return durationA - durationB;
+    });
+
+    const table = document.getElementById("participants-table");
+
+    table.innerHTML = `
+      <tr>
+        <th>ID</th>
+        <th>Username</th>
+        <th>Status</th>
+        <th>Score</th>
+        <th>Submitted At</th>
+        <th>Duration</th>
+      </tr>
+    `;
 
     participants.forEach((p) => {
-      // Format Submitted At
+      // Format date safely
       let formattedDate = "—";
       let duration = "—";
 
       if (p.submitted_at) {
-        const submitted = new Date(p.submitted_at);
-        if (!isNaN(submitted)) {
+        const timestamp = new Date(p.submitted_at);
+        if (!isNaN(timestamp)) {
           const options = {
             day: "2-digit",
             month: "2-digit",
@@ -38,12 +51,12 @@ async function loadParticipants() {
             minute: "2-digit",
             hour12: true,
           };
-          formattedDate = submitted.toLocaleString("en-GB", options).replace(",", "");
+          formattedDate = timestamp.toLocaleString("en-GB", options).replace(",", "");
         }
       }
 
-      // Calculate Duration only if not disqualified
-      if (p.created_at && p.submitted_at && p.status !== "disqualified") {
+      // Calculate duration
+      if (p.created_at && p.submitted_at) {
         const created = new Date(p.created_at);
         const submitted = new Date(p.submitted_at);
         if (!isNaN(created) && !isNaN(submitted)) {
@@ -74,7 +87,7 @@ async function loadParticipants() {
             badgeColor = "orange";
             break;
           default:
-            statusBadge = normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
+            statusBadge = normalizedStatus.charAt(0).toUpperCase() + p.status.slice(1);
         }
       }
 
@@ -89,10 +102,10 @@ async function loadParticipants() {
         </tr>
       `;
     });
+
   } catch (error) {
     console.error("Failed to load participants:", error);
-    // Only show alert if fetch truly failed
-    alert(`Failed to load participants data: ${error.message}`);
+    alert("Failed to load participants data");
   }
 }
 

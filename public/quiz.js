@@ -25,25 +25,20 @@ document.addEventListener("DOMContentLoaded", () => {
       questions = data.map(q => ({
         id: q.id,
         question: q.question,
-        options:  q.options  // <- parse string to array
+        options: q.options
       }));
-
       renderQuestions();
       startTimer();
     })
     .catch(err => {
       console.error("Error fetching questions:", err);
       alert("Failed to load questions. Refresh the page.");
-      console.log(data);
     });
 
   // ===== Render Questions =====
   function renderQuestions() {
     const submitBar = quizForm.querySelector(".submit-bar");
-    if (!submitBar) {
-      console.error("Submit bar not found in form!");
-      return;
-    }
+    if (!submitBar) return;
 
     questions.forEach((q, idx) => {
       const block = document.createElement("div");
@@ -60,7 +55,6 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       `;
       quizForm.insertBefore(block, submitBar);
-      console.log("Rendering question", q.id, q.question, q.options);
     });
   }
 
@@ -82,9 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateTimerDisplay() {
     const minutes = Math.floor(totalTime / 60);
     const seconds = totalTime % 60;
-    timerElem.textContent = `⏱ ${minutes.toString().padStart(2, "0")}:${seconds
-      .toString()
-      .padStart(2, "0")}`;
+    timerElem.textContent = `⏱ ${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   }
 
   // ===== Capture Answers =====
@@ -95,135 +87,97 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ===== Tab Switch → Disqualify =====
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden && !tabSwitched && !quizEnded && !submitting) {
-    tabSwitched = true;
-    quizEnded = true;
-
-    alert("🚫 You switched tabs. You are disqualified!");
-
-    // Mark in localStorage
-    localStorage.setItem("quizStatus", "disqualified");
-    localStorage.setItem("submittedAt", new Date().toISOString());
-
-    // Stop timer cleanly
-    if (window.timerInterval) clearInterval(window.timerInterval);
-
-    // Call existing backend disqualification logic
-    disqualifyParticipant().then(() => {
-      // ✅ After updating DB, go to exit page
-      window.location.href = "exit.html";
-    }).catch(() => {
-      // Even if backend call fails, still go to exit page
-      window.location.href = "exit.html";
-    });
-  }
-});
-
-
   // ===== Submit Quiz =====
-quizForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-  if (submitting || quizEnded) return;
+  quizForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (submitting || quizEnded) return;
 
-  if (Object.keys(answers).length < questions.length) {
-    if (!confirm("Some questions are unanswered. Submit anyway?")) return;
-  }
-
-  submitting = true;
-  quizEnded = true;
-  submitQuiz(false); // manual submit
-});
-
-// ===== Submit Quiz API =====
-async function submitQuiz(timeout = false) {
-  try {
-    const res = await fetch("/api/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        participantId: participant.id,
-        answers,
-        status: timeout ? "timeout" : "completed",
-      }),
-    });
-
-    const data = await res.json();
-    console.log("Submit response:", data);
-
-    if (data.success) {
-      localStorage.setItem("score", data.score);
-      localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
-      localStorage.setItem("createdAt", data.created_at);
-      localStorage.setItem("submittedAt", data.submitted_at);
-    } else {
-      console.warn("Unexpected response:", data);
-      localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
+    if (Object.keys(answers).length < questions.length) {
+      if (!confirm("Some questions are unanswered. Submit anyway?")) return;
     }
-  } catch (err) {
-    console.error("Submit error:", err);
-    localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
-  } finally {
-    submitting = false;
+
+    submitting = true;
     quizEnded = true;
-    window.location.href = "/exit.html";
+    submitQuiz(false);
+  });
+
+  // ===== Submit Quiz API =====
+  async function submitQuiz(timeout = false) {
+    try {
+      const res = await fetch("/api/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          participantId: participant.id,
+          answers,
+          status: timeout ? "timeout" : "completed"
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem("score", data.score);
+      }
+      localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
+      localStorage.setItem("submittedAt", data.submitted_at || new Date().toISOString());
+    } catch (err) {
+      console.error("Submit error:", err);
+      localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
+    } finally {
+      submitting = false;
+      quizEnded = true;
+      redirectToExit();
+    }
   }
-}
 
-
- // ===== Disqualify Participant =====
-async function disqualifyParticipant() {
-  if (quizEnded || submitting) return;
-  quizEnded = true;
-  submitting = true;
-
-  try {
-    const participant = JSON.parse(localStorage.getItem("participant"));
-    await fetch("/api/disqualify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ participantId: participant.id }),
-    });
-    localStorage.setItem("quizStatus", "disqualified");
-  } catch (err) {
-    console.error("Disqualify error:", err);
-  } finally {
-    window.location.href = "/exit.html";
-  }
-}
-
-// ===== Tab Switch / Window Blur → Disqualify =====
-function handleDisqualification() {
-  if (!tabSwitched && !quizEnded && !submitting) {
-    tabSwitched = true;
+  // ===== Disqualify Participant =====
+  async function disqualifyParticipant() {
+    if (quizEnded || submitting) return;
     quizEnded = true;
-    alert("🚫 You switched tabs or left the application. You are disqualified!");
+    submitting = true;
 
-    // Mark in localStorage
-    localStorage.setItem("quizStatus", "disqualified");
-    localStorage.setItem("submittedAt", new Date().toISOString());
-
-    // Stop timer
-    if (window.timerInterval) clearInterval(window.timerInterval);
-
-    // Call backend disqualification
-    disqualifyParticipant();
+    try {
+      await fetch("/api/disqualify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ participantId: participant.id }),
+      });
+      localStorage.setItem("quizStatus", "disqualified");
+      localStorage.setItem("submittedAt", new Date().toISOString());
+    } catch (err) {
+      console.error("Disqualify error:", err);
+    } finally {
+      redirectToExit();
+    }
   }
-}
 
-// Listen for tab switching / hiding the page
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden) handleDisqualification();
-});
+  // ===== Handle Tab Switch / Window Blur =====
+  function handleDisqualification() {
+    if (!tabSwitched && !quizEnded && !submitting) {
+      tabSwitched = true;
+      quizEnded = true;
 
-// Listen for window losing focus (Alt+Tab, minimize, clicking outside)
-window.addEventListener("blur", handleDisqualification);
+      alert("🚫 You switched tabs or left the application. You are disqualified!");
 
+      if (window.timerInterval) clearInterval(window.timerInterval);
+      disqualifyParticipant();
+    }
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) handleDisqualification();
+  });
+
+  window.addEventListener("blur", handleDisqualification);
 
   // ===== Handle Timeout =====
   function handleTimeout() {
     alert("⏰ Time's up! Submitting your quiz automatically...");
     submitQuiz(true);
+  }
+
+  // ===== Redirect to Exit Page =====
+  function redirectToExit() {
+    window.location.href = "/exit.html";
   }
 });
