@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 11000; // separate port if needed
+const PORT = process.env.PORT || 10000; // separate port if needed
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -50,7 +50,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 // ===== CHECK PARTICIPANT =====
-app.get("/api/check-participant/:id", async (req, res) => {
+app.get("/api/check-participants_round2/:id", async (req, res) => {
   try {
     const result = await pool.query(
       "SELECT id, status FROM participants_round2 WHERE id=$1",
@@ -65,7 +65,7 @@ app.get("/api/check-participant/:id", async (req, res) => {
 });
 
 // ===== FETCH QUESTIONS =====
-app.get("/api/questions", async (req, res) => {
+app.get("/api/questions_round2", async (req, res) => {
   try {
     const result = await pool.query("SELECT id, question, correct_answer, options FROM questions_round2 ORDER BY id ASC");
     const questions = result.rows.map(q => ({
