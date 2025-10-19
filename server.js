@@ -16,9 +16,10 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 const pool = new Pool({
-  connectionString: "postgres://quizdb_ythj_user:ZSxMaEGmYb0SLuuYmoG6Rpo68MYpt2fD@dpg-d3igemali9vc73eqnafg-a.oregon-postgres.render.com:5432/quizdb_ythj",
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
 });
+
 
 // ===== HOME =====
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
