@@ -156,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===== Disqualification =====
-  async function disqualifyParticipant() {
+  async function disqualifyParticipants_round2() {
     if (quizEnded || submitting) return;
 
     submitting = true;

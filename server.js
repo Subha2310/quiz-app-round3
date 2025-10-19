@@ -9,17 +9,17 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 10000; // separate port if needed
+const PORT = process.env.PORT || 10000;
 
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+// ===== DATABASE CONNECTION =====
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
 });
-
 
 // ===== HOME =====
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
@@ -68,12 +68,12 @@ app.get("/api/check-participants_round2/:id", async (req, res) => {
 // ===== FETCH QUESTIONS =====
 app.get("/api/questions_round2", async (req, res) => {
   try {
-    const result = await pool.query("SELECT id, question, correct_answer, options FROM questions_round2 ORDER BY id ASC");
+    const result = await pool.query("SELECT id, question, options, correct_answer_round2 FROM questions_round2 ORDER BY id ASC");
     const questions = result.rows.map(q => ({
       id: q.id,
       question: q.question,
-      correct_answer: q.correct_answer,
-      options: q.options
+      options: q.options,
+      correct_answer: q.correct_answer
     }));
     res.json(questions);
   } catch (err) {
@@ -98,7 +98,7 @@ app.post("/api/submit", async (req, res) => {
     if (!userCheck.rows.length) return res.status(400).json({ success: false, error: "Already submitted or disqualified" });
 
     const questionsRes = await pool.query("SELECT id, correct_answer FROM questions_round2");
-    const questionMap = new Map(questionsRes.rows.map(q => [q.id, q.correct_answer]));
+    const questionMap = new Map(questionsRes.rows.map(q => [q.id, q.correct_answer_round2]));
 
     let score = 0;
     for (const [qid, ans] of Object.entries(parsedAnswers)) {
@@ -146,7 +146,7 @@ app.post("/api/disqualify", async (req, res) => {
 });
 
 // ===== ADMIN DASHBOARD =====
-app.get("/api/participants", async (req, res) => {
+app.get("/api/participants_round2", async (req, res) => {
   try {
     const result = await pool.query(
       "SELECT id, username, status, score, created_at, submitted_at FROM participants_round2 ORDER BY submitted_at DESC NULLS LAST, id ASC"
