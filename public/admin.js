@@ -5,7 +5,7 @@ async function loadParticipantsRound2() {
     let participants = await res.json();
 
     // ===== Sort participants =====
-    participants.sort((a, b) => {
+    participants_round2.sort((a, b) => {
       const scoreDiff = (b.score || 0) - (a.score || 0);
       if (scoreDiff !== 0) return scoreDiff;
 
@@ -31,7 +31,7 @@ async function loadParticipantsRound2() {
       </tr>
     `;
 
-    participants.forEach((p) => {
+    participants_round2.forEach((p) => {
       let formattedDate = "—";
       let duration = "—";
 

@@ -121,7 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem("submittedAt", submitTime);
       localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
 
-      const res = await fetch("/api/submit", {
+      const res = await fetch("/api/submit_round2", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

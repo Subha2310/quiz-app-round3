@@ -218,7 +218,7 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
       return;
     }
 
-    const res = await fetch("/api/login", {
+    const res = await fetch("/api/login_round2", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: participantId, name: username })
