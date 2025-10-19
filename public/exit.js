@@ -6,14 +6,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const nameElem = document.getElementById("name");
   const scoreElem = document.getElementById("score");
+  const durationElem = document.getElementById("duration");
   const statusBox = document.getElementById("status-box");
   const scoreRow = document.getElementById("score-row");
-  const durationElem = document.getElementById("duration");
 
-  // Participant name
+  // ✅ Set participant name
   nameElem.textContent = participant.username || "Participant";
 
-  // Status
+  // ✅ Status display
   statusBox.classList.remove("completed", "timeout", "disqualified");
   if (quizStatus === "completed") {
     statusBox.textContent = "✅ Completed Successfully";
@@ -32,12 +32,12 @@ document.addEventListener("DOMContentLoaded", () => {
     scoreRow.classList.add("hidden");
   }
 
-  // Score display only if not disqualified
+  // ✅ Show score only if not disqualified
   if (quizStatus !== "disqualified") scoreElem.textContent = score;
 
-  // Hide duration completely
+  // ✅ Hide duration completely
   if (durationElem) durationElem.textContent = "-";
 
-  // Clear temporary answers
+  // ✅ Clear temporary data
   localStorage.removeItem("answers");
 });
