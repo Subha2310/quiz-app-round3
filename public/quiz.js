@@ -2,13 +2,12 @@
 document.addEventListener("DOMContentLoaded", () => {
   const participant = JSON.parse(localStorage.getItem("participant"));
 
-  // ✅ Reset previous quiz data if starting a fresh quiz
-  if (!localStorage.getItem("quizStatus") || localStorage.getItem("quizStatus") === "completed") {
-    localStorage.removeItem("createdAt");
-    localStorage.removeItem("submittedAt");
-    localStorage.removeItem("score");
-    localStorage.removeItem("answers");
-  }
+  // ✅ Always reset previous quiz data at the very start of a new quiz
+  localStorage.removeItem("createdAt");
+  localStorage.removeItem("submittedAt");
+  localStorage.removeItem("score");
+  localStorage.removeItem("answers");
+  localStorage.removeItem("quizStatus");
 
   const quizForm = document.getElementById("quiz-form");
   const timerElem = document.getElementById("timer");
