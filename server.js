@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 11000; // separate port if needed
 
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, "public_round2")));
+app.use(express.static(path.join(__dirname, "public")));
 
 const pool = new Pool({
   connectionString: "postgres://quizdb_ythj_user:ZSxMaEGmYb0SLuuYmoG6Rpo68MYpt2fD@dpg-d3igemali9vc73eqnafg-a.oregon-postgres.render.com:5432/quizdb_ythj",
@@ -21,7 +21,7 @@ const pool = new Pool({
 });
 
 // ===== HOME =====
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public_round2", "index.html")));
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 
 // ===== LOGIN =====
 app.post("/api/login", async (req, res) => {
