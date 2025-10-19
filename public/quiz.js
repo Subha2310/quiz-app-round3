@@ -1,6 +1,15 @@
 // ===== quiz.js =====
 document.addEventListener("DOMContentLoaded", () => {
   const participant = JSON.parse(localStorage.getItem("participant"));
+
+  // ✅ Reset previous quiz data if starting a fresh quiz
+  if (!localStorage.getItem("quizStatus") || localStorage.getItem("quizStatus") === "completed") {
+    localStorage.removeItem("createdAt");
+    localStorage.removeItem("submittedAt");
+    localStorage.removeItem("score");
+    localStorage.removeItem("answers");
+  }
+
   const quizForm = document.getElementById("quiz-form");
   const timerElem = document.getElementById("timer");
 
@@ -28,12 +37,11 @@ document.addEventListener("DOMContentLoaded", () => {
         options: q.options // parse string if necessary
       }));
       renderQuestions();
-   
 
       // ✅ Set createdAt when quiz actually starts
-    if (!localStorage.getItem("createdAt")) {
-      localStorage.setItem("createdAt", new Date().toISOString());
-    }
+      if (!localStorage.getItem("createdAt")) {
+        localStorage.setItem("createdAt", new Date().toISOString());
+      }
 
       startTimer();
     })
@@ -107,47 +115,46 @@ document.addEventListener("DOMContentLoaded", () => {
     submitQuiz(false);
   });
 
- // ===== Submit Quiz API =====
-async function submitQuiz(timeout = false) {
-  try {
-    // ✅ Record local submission time immediately
-    const submitTime = new Date().toISOString();
-    localStorage.setItem("submittedAt", submitTime);
-    localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
+  // ===== Submit Quiz API =====
+  async function submitQuiz(timeout = false) {
+    try {
+      // ✅ Record local submission time immediately
+      const submitTime = new Date().toISOString();
+      localStorage.setItem("submittedAt", submitTime);
+      localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
 
-    // ===== Send submission to server =====
-    const res = await fetch("/api/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        participantId: participant.id,
-        answers,
-        status: timeout ? "timeout" : "completed"
-      }),
-    });
+      // ===== Send submission to server =====
+      const res = await fetch("/api/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          participantId: participant.id,
+          answers,
+          status: timeout ? "timeout" : "completed"
+        }),
+      });
 
-    // ===== Handle server response =====
-    const data = await res.json();
+      // ===== Handle server response =====
+      const data = await res.json();
 
-    if (data.success) {
-      localStorage.setItem("score", data.score);
-      // If server returns timestamp, sync it (optional)
-      if (data.submitted_at) {
-        localStorage.setItem("submittedAt", data.submitted_at);
+      if (data.success) {
+        localStorage.setItem("score", data.score);
+        // If server returns timestamp, sync it (optional)
+        if (data.submitted_at) {
+          localStorage.setItem("submittedAt", data.submitted_at);
+        }
+      } else {
+        console.warn("Submission failed:", data.message);
       }
-    } else {
-      console.warn("Submission failed:", data.message);
+
+    } catch (err) {
+      console.error("Submit error:", err);
+    } finally {
+      submitting = false;
+      quizEnded = true;
+      redirectToExit();
     }
-
-  } catch (err) {
-    console.error("Submit error:", err);
-  } finally {
-    submitting = false;
-    quizEnded = true;
-    redirectToExit();
   }
-}
-
 
   // ===== Handle Timeout =====
   function handleTimeout() {
