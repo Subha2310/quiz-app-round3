@@ -113,46 +113,31 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ===== Submit Quiz API =====
-async function submitQuiz(timeout = false) {
-  try {
-    // ✅ Record local submission time immediately
-    const submitTime = new Date().toISOString();
-    localStorage.setItem("submittedAt", submitTime);
-    localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
+  async function submitQuiz(timeout = false) {
+    try {
+      const res = await fetch("/api/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          participantId: participant.id,
+          answers,
+          status: timeout ? "timeout" : "completed"
+        }),
+      });
 
-    // ===== Send submission to server =====
-    const res = await fetch("/api/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        participantId: participant.id,
-        answers,
-        status: timeout ? "timeout" : "completed"
-      }),
-    });
-
-    // ===== Handle server response =====
-    const data = await res.json();
-
-    if (data.success) {
-      localStorage.setItem("score", data.score);
-      // If server returns timestamp, sync it (optional)
-      if (data.submitted_at) {
-        localStorage.setItem("submittedAt", data.submitted_at);
-      }
-    } else {
-      console.warn("Submission failed:", data.message);
+      const data = await res.json();
+      if (data.success) localStorage.setItem("score", data.score);
+      localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
+      localStorage.setItem("submittedAt", data.submitted_at || new Date().toISOString());
+    } catch (err) {
+      console.error("Submit error:", err);
+      localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
+    } finally {
+      submitting = false;
+      quizEnded = true;
+      redirectToExit();
     }
-
-  } catch (err) {
-    console.error("Submit error:", err);
-  } finally {
-    submitting = false;
-    quizEnded = true;
-    redirectToExit();
   }
-}
-
 
   // ===== Handle Timeout =====
   function handleTimeout() {
