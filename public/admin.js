@@ -1,17 +1,14 @@
-// ===== admin.js =====
-async function loadParticipants() {
+async function loadParticipantsRound2() {
   try {
-    const res = await fetch("/api/participants");
+    const res = await fetch("/api/participants_round2"); // ✅ fetch from round2 table
     if (!res.ok) throw new Error("Failed to fetch participants");
     let participants = await res.json();
 
-    // ===== Sort participants: by score descending, then duration ascending =====
+    // ===== Sort participants =====
     participants.sort((a, b) => {
-      // Sort by score descending
       const scoreDiff = (b.score || 0) - (a.score || 0);
       if (scoreDiff !== 0) return scoreDiff;
 
-      // If scores are equal, sort by duration ascending
       const durationA = a.created_at && a.submitted_at
         ? new Date(a.submitted_at) - new Date(a.created_at)
         : Infinity;
@@ -23,7 +20,6 @@ async function loadParticipants() {
     });
 
     const table = document.getElementById("participants-table");
-
     table.innerHTML = `
       <tr>
         <th>ID</th>
@@ -36,58 +32,34 @@ async function loadParticipants() {
     `;
 
     participants.forEach((p) => {
-      // Format date safely
       let formattedDate = "—";
       let duration = "—";
 
       if (p.submitted_at) {
         const timestamp = new Date(p.submitted_at);
         if (!isNaN(timestamp)) {
-          const options = {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          };
-          formattedDate = timestamp.toLocaleString("en-GB", options).replace(",", "");
+          formattedDate = timestamp.toLocaleString("en-GB", { 
+            day: "2-digit", month: "2-digit", year: "numeric",
+            hour: "2-digit", minute: "2-digit", hour12: true
+          }).replace(",", "");
         }
       }
 
-      // Calculate duration
       if (p.created_at && p.submitted_at) {
-        const created = new Date(p.created_at);
-        const submitted = new Date(p.submitted_at);
-        if (!isNaN(created) && !isNaN(submitted)) {
-          const diffMs = submitted - created;
-          const minutes = Math.floor(diffMs / 60000);
-          const seconds = Math.floor((diffMs % 60000) / 1000);
-          duration = `${minutes}m ${seconds}s`;
-        }
+        const diffMs = new Date(p.submitted_at) - new Date(p.created_at);
+        const minutes = Math.floor(diffMs / 60000);
+        const seconds = Math.floor((diffMs % 60000) / 1000);
+        duration = `${minutes}m ${seconds}s`;
       }
 
-      // Status badge
       let statusBadge = "";
       let badgeColor = "gray";
-
       if (p.status) {
-        const normalizedStatus = p.status.trim().toLowerCase();
-        switch (normalizedStatus) {
-          case "completed":
-            statusBadge = "Completed";
-            badgeColor = "green";
-            break;
-          case "disqualified":
-            statusBadge = "Disqualified";
-            badgeColor = "red";
-            break;
-          case "timeout":
-            statusBadge = "Timeout";
-            badgeColor = "orange";
-            break;
-          default:
-            statusBadge = normalizedStatus.charAt(0).toUpperCase() + p.status.slice(1);
+        switch (p.status.toLowerCase()) {
+          case "completed": statusBadge = "Completed"; badgeColor = "green"; break;
+          case "disqualified": statusBadge = "Disqualified"; badgeColor = "red"; break;
+          case "timeout": statusBadge = "Timeout"; badgeColor = "orange"; break;
+          default: statusBadge = p.status;
         }
       }
 
@@ -105,8 +77,8 @@ async function loadParticipants() {
 
   } catch (error) {
     console.error("Failed to load participants:", error);
-    alert("Failed to load participants data");
+    alert("Failed to load Round 2 participants data");
   }
 }
 
-loadParticipants();
+loadParticipantsRound2();

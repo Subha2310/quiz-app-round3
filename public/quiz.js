@@ -1,16 +1,13 @@
-// ===== quiz.js =====
+// ===== quiz.js for Round 2 =====
 document.addEventListener("DOMContentLoaded", () => {
   const participant = JSON.parse(localStorage.getItem("participant"));
 
-  // ✅ Always reset previous quiz data at the very start of a new quiz
+  // ✅ Reset previous quiz data at the start
   localStorage.removeItem("createdAt");
   localStorage.removeItem("submittedAt");
   localStorage.removeItem("score");
   localStorage.removeItem("answers");
   localStorage.removeItem("quizStatus");
-
-  const quizForm = document.getElementById("quiz-form");
-  const timerElem = document.getElementById("timer");
 
   if (!participant || !participant.id) {
     alert("❌ No participant info found. Redirecting to login.");
@@ -18,26 +15,30 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  const quizForm = document.getElementById("quiz-form");
+  const timerElem = document.getElementById("timer");
+
   let questions = [];
   let answers = {};
-  let totalTime = 10 * 60; // 10 minutes
+  let totalTime = 7 * 60; // 7 minutes
   let timerInterval;
   let quizEnded = false;
   let tabSwitched = false;
   let submitting = false;
 
-  // ===== Fetch Questions =====
-  fetch("/api/questions")
+  // ===== Fetch Round 2 Questions =====
+  fetch("/api/questions_round2")
     .then(res => res.json())
     .then(data => {
       questions = data.map(q => ({
         id: q.id,
         question: q.question,
-        options: q.options // parse string if necessary
+        options: Array.isArray(q.options) ? q.options : JSON.parse(q.options)
       }));
-      renderQuestions();
 
-      // ✅ Set createdAt when quiz actually starts
+      renderQuestionsRound2();
+
+      // ✅ Set createdAt when quiz starts
       if (!localStorage.getItem("createdAt")) {
         localStorage.setItem("createdAt", new Date().toISOString());
       }
@@ -50,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
   // ===== Render Questions =====
-  function renderQuestions() {
+  function renderQuestionsRound2() {
     const submitBar = quizForm.querySelector(".submit-bar");
     if (!submitBar) return;
 
@@ -60,12 +61,11 @@ document.addEventListener("DOMContentLoaded", () => {
       block.innerHTML = `
         <h3>Q${idx + 1}. ${q.question}</h3>
         <div class="options">
-          ${q.options
-            .map(opt => `
-              <label class="option">
-                <input type="radio" name="q${q.id}" value="${opt}" /> ${opt}
-              </label>
-            `).join("")}
+          ${q.options.map(opt => `
+            <label class="option">
+              <input type="radio" name="q${q.id}" value="${opt}" /> ${opt}
+            </label>
+          `).join("")}
         </div>
       `;
       quizForm.insertBefore(block, submitBar);
@@ -75,12 +75,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== Timer =====
   function startTimer() {
     updateTimerDisplay();
-    timerInterval = setInterval(() => {
+    window.timerInterval = setInterval(() => {
       if (quizEnded) return;
       totalTime--;
       updateTimerDisplay();
       if (totalTime <= 0) {
-        clearInterval(timerInterval);
+        clearInterval(window.timerInterval);
         handleTimeout();
       }
     }, 1000);
@@ -117,12 +117,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== Submit Quiz API =====
   async function submitQuiz(timeout = false) {
     try {
-      // ✅ Record local submission time immediately
       const submitTime = new Date().toISOString();
       localStorage.setItem("submittedAt", submitTime);
       localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
 
-      // ===== Send submission to server =====
       const res = await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -133,19 +131,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }),
       });
 
-      // ===== Handle server response =====
       const data = await res.json();
-
       if (data.success) {
         localStorage.setItem("score", data.score);
-        // If server returns timestamp, sync it (optional)
         if (data.submitted_at) {
           localStorage.setItem("submittedAt", data.submitted_at);
         }
       } else {
         console.warn("Submission failed:", data.message);
       }
-
     } catch (err) {
       console.error("Submit error:", err);
     } finally {
@@ -196,8 +190,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) handleDisqualification();
   });
-
-  window.addEventListener("blur", handleDisqualification);
 
   // ===== Redirect =====
   function redirectToExit() {
