@@ -40,6 +40,9 @@ if (quizStatus !== "disqualified") scoreElem.textContent = score;
 
 // ✅ Duration calculation (skip for disqualified)
 if (quizStatus !== "disqualified") {
+  const createdAtStr = localStorage.getItem("createdAt");
+  const submittedAtStr = localStorage.getItem("submittedAt");
+
   if (createdAtStr && submittedAtStr) {
     const createdAt = new Date(createdAtStr);
     const submittedAt = new Date(submittedAtStr);
@@ -58,6 +61,7 @@ if (quizStatus !== "disqualified") {
 } else {
   durationElem.textContent = "-";
 }
+
 
 
   // ✅ Clear temporary data
