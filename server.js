@@ -22,19 +22,29 @@ const pool = new Pool({
 });
 
 // ===== HOME =====
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 // ===== LOGIN =====
-app.post("/api/login", async (req, res) => {
+app.post("/api/login_round2", async (req, res) => {
   const { id, name } = req.body;
-  if (!id || !name) return res.status(400).json({ success: false, error: "ID and Name required" });
+  if (!id || !name)
+    return res.status(400).json({ success: false, error: "ID and Name required" });
 
   try {
-    const existing = await pool.query("SELECT * FROM participants_round2 WHERE id=$1", [id]);
+    const existing = await pool.query(
+      "SELECT * FROM participants_round2 WHERE id=$1",
+      [id]
+    );
+
     if (existing.rows.length > 0) {
       const user = existing.rows[0];
       if (["completed", "disqualified"].includes(user.status)) {
-        return res.status(400).json({ success: false, error: "Already completed/disqualified" });
+        return res.status(400).json({
+          success: false,
+          error: "Already completed/disqualified",
+        });
       }
       return res.json({ success: true, participant: user });
     }
@@ -43,6 +53,7 @@ app.post("/api/login", async (req, res) => {
       "INSERT INTO participants_round2 (id, username, status, score, created_at) VALUES ($1, $2, 'active', 0, NOW()) RETURNING *",
       [id, name]
     );
+
     res.json({ success: true, participant: result.rows[0] });
   } catch (err) {
     console.error("Login DB error:", err);
@@ -51,7 +62,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 // ===== CHECK PARTICIPANT =====
-app.get("/api/check-participants_round2/:id", async (req, res) => {
+app.get("/api/check_participant_round2/:id", async (req, res) => {
   try {
     const result = await pool.query(
       "SELECT id, status FROM participants_round2 WHERE id=$1",
@@ -68,13 +79,17 @@ app.get("/api/check-participants_round2/:id", async (req, res) => {
 // ===== FETCH QUESTIONS =====
 app.get("/api/questions_round2", async (req, res) => {
   try {
-    const result = await pool.query("SELECT id, question, options, correct_answer_round2 FROM questions_round2 ORDER BY id ASC");
-    const questions = result.rows.map(q => ({
+    const result = await pool.query(
+      "SELECT id, question, options, correct_answer FROM questions_round2 ORDER BY id ASC"
+    );
+
+    const questions = result.rows.map((q) => ({
       id: q.id,
       question: q.question,
       options: q.options,
-      correct_answer: q.correct_answer
+      correct_answer: q.correct_answer,
     }));
+
     res.json(questions);
   } catch (err) {
     console.error("Fetch questions error:", err);
@@ -83,22 +98,38 @@ app.get("/api/questions_round2", async (req, res) => {
 });
 
 // ===== SUBMIT QUIZ =====
-app.post("/api/submit", async (req, res) => {
+app.post("/api/submit_round2", async (req, res) => {
   const { participantId, answers, status } = req.body;
   if (!participantId || !answers || !status)
     return res.status(400).json({ success: false, error: "Invalid request" });
 
   let parsedAnswers = answers;
   if (typeof answers === "string") {
-    try { parsedAnswers = JSON.parse(answers); } catch { parsedAnswers = {}; }
+    try {
+      parsedAnswers = JSON.parse(answers);
+    } catch {
+      parsedAnswers = {};
+    }
   }
 
   try {
-    const userCheck = await pool.query("SELECT * FROM participants_round2 WHERE id=$1 AND status='active'", [participantId]);
-    if (!userCheck.rows.length) return res.status(400).json({ success: false, error: "Already submitted or disqualified" });
+    const userCheck = await pool.query(
+      "SELECT * FROM participants_round2 WHERE id=$1 AND status='active'",
+      [participantId]
+    );
 
-    const questionsRes = await pool.query("SELECT id, correct_answer FROM questions_round2");
-    const questionMap = new Map(questionsRes.rows.map(q => [q.id, q.correct_answer_round2]));
+    if (!userCheck.rows.length)
+      return res
+        .status(400)
+        .json({ success: false, error: "Already submitted or disqualified" });
+
+    const questionsRes = await pool.query(
+      "SELECT id, correct_answer FROM questions_round2"
+    );
+
+    const questionMap = new Map(
+      questionsRes.rows.map((q) => [q.id, q.correct_answer])
+    );
 
     let score = 0;
     for (const [qid, ans] of Object.entries(parsedAnswers)) {
@@ -106,10 +137,15 @@ app.post("/api/submit", async (req, res) => {
       if (correct && ans === correct) score++;
     }
 
-    const finalStatus = status === "timeout" ? "timeout" : status === "completed" ? "completed" : "disqualified";
+    const finalStatus =
+      status === "timeout"
+        ? "timeout"
+        : status === "completed"
+        ? "completed"
+        : "disqualified";
 
     const updateRes = await pool.query(
-      `UPDATE participants_round2 SET status=$1, score=$2, submitted_at=NOW() WHERE id=$3 RETURNING score, created_at, submitted_at`,
+      "UPDATE participants_round2 SET status=$1, score=$2, submitted_at=NOW() WHERE id=$3 RETURNING score, created_at, submitted_at",
       [finalStatus, score, participantId]
     );
 
@@ -127,9 +163,12 @@ app.post("/api/submit", async (req, res) => {
 });
 
 // ===== DISQUALIFY =====
-app.post("/api/disqualify", async (req, res) => {
+app.post("/api/disqualify_round2", async (req, res) => {
   const { participantId } = req.body;
-  if (!participantId) return res.status(400).json({ success: false, error: "Missing participantId" });
+  if (!participantId)
+    return res
+      .status(400)
+      .json({ success: false, error: "Missing participantId" });
 
   try {
     const result = await pool.query(
@@ -137,7 +176,12 @@ app.post("/api/disqualify", async (req, res) => {
       [participantId]
     );
 
-    if (!result.rows.length) return res.json({ success: false, message: "Already submitted/disqualified" });
+    if (!result.rows.length)
+      return res.json({
+        success: false,
+        message: "Already submitted/disqualified",
+      });
+
     res.json({ success: true, message: "Disqualified" });
   } catch (err) {
     console.error("Disqualify error:", err);
@@ -158,4 +202,6 @@ app.get("/api/participants_round2", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`✅ Round 2 server running on port ${PORT}`));
+app.listen(PORT, () =>
+  console.log(`✅ Round 2 server running on port ${PORT}`)
+);
