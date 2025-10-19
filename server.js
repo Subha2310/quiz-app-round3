@@ -21,6 +21,17 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
+// Test DB connection route
+app.get("/api/testdb", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT NOW()");
+    res.json({ dbTime: result.rows[0] });
+  } catch (err) {
+    console.error("DB connection failed:", err);
+    res.status(500).json({ error: "DB connection failed" });
+  }
+});
+
 // ===== HOME =====
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
@@ -126,7 +137,6 @@ app.post("/api/submit_round2", async (req, res) => {
     const questionsRes = await pool.query(
       "SELECT id, correct_answer FROM questions_round2"
     );
-
     const questionMap = new Map(
       questionsRes.rows.map((q) => [q.id, q.correct_answer])
     );
