@@ -1,11 +1,14 @@
 // ===== exit.js =====
 document.addEventListener("DOMContentLoaded", () => {
   const participant = JSON.parse(localStorage.getItem("participant")) || {};
-  const score = localStorage.getItem(`score_${participant.id}`) || "0";
-  const quizStatus = localStorage.getItem(`quizStatus_${participant.id}`);
+  const score = localStorage.getItem("score") || "0";
+  const createdAtStr = localStorage.getItem("createdAt");
+  const submittedAtStr = localStorage.getItem("submittedAt");
+  const quizStatus = localStorage.getItem("quizStatus");
 
   const nameElem = document.getElementById("name");
   const scoreElem = document.getElementById("score");
+  const submittedElem = document.getElementById("submittedAt");
   const durationElem = document.getElementById("duration");
   const statusBox = document.getElementById("status-box");
   const scoreRow = document.getElementById("score-row");
@@ -32,11 +35,30 @@ document.addEventListener("DOMContentLoaded", () => {
     scoreRow.classList.add("hidden");
   }
 
-  // ✅ Show score only if not disqualified
-  if (quizStatus !== "disqualified") scoreElem.textContent = score;
+// ✅ Show score only if not disqualified
+if (quizStatus !== "disqualified") scoreElem.textContent = score;
 
-  // ✅ Hide duration completely
-  if (durationElem) durationElem.textContent = "-";
+// ✅ Duration calculation (skip for disqualified)
+if (quizStatus !== "disqualified") {
+  if (createdAtStr && submittedAtStr) {
+    const createdAt = new Date(createdAtStr);
+    const submittedAt = new Date(submittedAtStr);
+
+    if (!isNaN(createdAt) && !isNaN(submittedAt)) {
+      const diffMs = submittedAt - createdAt;
+      const minutes = Math.floor(diffMs / 60000);
+      const seconds = Math.floor((diffMs % 60000) / 1000);
+      durationElem.textContent = `${minutes}m ${seconds}s`;
+    } else {
+      durationElem.textContent = "N/A";
+    }
+  } else {
+    durationElem.textContent = "N/A";
+  }
+} else {
+  durationElem.textContent = "-";
+}
+
 
   // ✅ Clear temporary data
   localStorage.removeItem("answers");
