@@ -18,6 +18,11 @@ document.addEventListener("DOMContentLoaded", () => {
   let tabSwitched = false;
   let submitting = false;
 
+// ✅ Record quiz start time once
+  if (!localStorage.getItem("createdAt")) {
+    localStorage.setItem("createdAt", new Date().toISOString());
+  }
+
   // ===== Fetch Questions =====
   fetch("/api/questions")
     .then(res => res.json())
