@@ -59,6 +59,7 @@ if (quizStatus !== "disqualified") {
   durationElem.textContent = "-";
 }
 
+
   // ✅ Clear temporary data
   localStorage.removeItem("answers");
 });
