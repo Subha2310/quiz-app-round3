@@ -53,23 +53,27 @@ async function loadParticipantsRound2() {
         duration = `${minutes}m ${seconds}s`;
       }
 
-      // ===== Determine status badge =====
-      let statusBadge = "Active"; // default
+       // Status badge
+      let statusBadge = "";
       let badgeColor = "gray";
+
       if (p.status) {
-        const s = p.status.toLowerCase();
-        if (s === "completed") {
-          statusBadge = "Completed";
-          badgeColor = "green";
-        } else if (s === "disqualified") {
-          statusBadge = "Disqualified";
-          badgeColor = "red";
-        } else if (s === "timeout") {
-          statusBadge = "Timeout";
-          badgeColor = "orange";
-        } else {
-          statusBadge = "Active";
-          badgeColor = "gray";
+        const normalizedStatus = p.status.trim().toLowerCase();
+        switch (normalizedStatus) {
+          case "completed":
+            statusBadge = "Completed";
+            badgeColor = "green";
+            break;
+          case "disqualified":
+            statusBadge = "Disqualified";
+            badgeColor = "red";
+            break;
+          case "timeout":
+            statusBadge = "Timeout";
+            badgeColor = "orange";
+            break;
+          default:
+            statusBadge = normalizedStatus.charAt(0).toUpperCase() + p.status.slice(1);
         }
       }
 

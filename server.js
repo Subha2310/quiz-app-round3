@@ -173,32 +173,24 @@ app.post("/api/submit_round2", async (req, res) => {
 });
 
 // ===== DISQUALIFY =====
-// ===== DISQUALIFY ROUND 2 =====
 app.post("/api/disqualify_round2", async (req, res) => {
-  try {
-    const { participantId } = req.body;
-    if (!participantId) {
-      return res.status(400).json({ success: false, message: "Missing participantId" });
-    }
+  const { participantId } = req.body;
+  if (!participantId)
+    return res.status(400).json({ success: false, error: "Missing participantId" });
 
-    // ✅ Update status to "disqualified"
+  try {
     const result = await pool.query(
-      `UPDATE participants_round2
-       SET status = 'disqualified',
-           submitted_at = NOW()
-       WHERE id = $1
-       RETURNING *`,
+      "UPDATE participants_round2 SET status='disqualified', submitted_at=NOW() WHERE id=$1 AND status='active' RETURNING *",
       [participantId]
     );
 
-    if (result.rowCount === 0) {
-      return res.status(404).json({ success: false, message: "Participant not found" });
-    }
+    if (!result.rows.length)
+      return res.json({ success: false, message: "Already submitted/disqualified" });
 
-    res.json({ success: true, participant: result.rows[0] });
+    res.json({ success: true, message: "Disqualified" });
   } catch (err) {
-    console.error("❌ Error disqualifying participant:", err);
-    res.status(500).json({ success: false, message: "Server error while disqualifying participant" });
+    console.error("Disqualify error:", err);
+    res.status(500).json({ success: false, error: "Disqualification failed" });
   }
 });
 
