@@ -180,7 +180,7 @@ app.post("/api/disqualify_round2", async (req, res) => {
 
   try {
     const result = await pool.query(
-      "UPDATE participants_round2 SET status='disqualified', submitted_at=NOW() WHERE id=$1 AND status='active' RETURNING *",
+      "UPDATE participants_round2 SET status='disqualified', submitted_at=NOW() WHERE id=$1 AND status='disqualified' RETURNING *",
       [participantId]
     );
 
