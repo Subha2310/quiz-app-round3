@@ -204,7 +204,7 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
   }
 
   try {
-    const checkRes = await fetch(`/api/check-participant-round2/${participantId}`);
+    const checkRes = await fetch(`/api/check_participant_round2/${participantId}`);
     const checkData = await checkRes.json();
 
     if (checkData.exists) {
