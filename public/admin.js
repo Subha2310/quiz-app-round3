@@ -28,6 +28,7 @@ async function loadParticipantsRound2() {
         <th>Score</th>
         <th>Submitted At</th>
         <th>Duration</th>
+        <th>Action</th>
       </tr>
     `;
 
@@ -63,6 +64,12 @@ async function loadParticipantsRound2() {
         }
       }
 
+      // Add a Disqualify button only for active users
+      const actionButton =
+        p.status?.toLowerCase() === "active"
+          ? `<button onclick="disqualifyParticipant('${p.id}')" style="background:red;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Disqualify</button>`
+          : "—";
+
       table.innerHTML += `
         <tr>
           <td>${p.id}</td>
@@ -71,6 +78,7 @@ async function loadParticipantsRound2() {
           <td>${p.score ?? 0}</td>
           <td>${formattedDate}</td>
           <td>${duration}</td>
+          <td>${actionButton}</td>
         </tr>
       `;
     });
@@ -81,4 +89,29 @@ async function loadParticipantsRound2() {
   }
 }
 
+// ===== DISQUALIFY FUNCTION =====
+async function disqualifyParticipant(participantId) {
+  if (!confirm(`Are you sure you want to disqualify ${participantId}?`)) return;
+
+  try {
+    const res = await fetch("/api/disqualify_round2", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ participantId }),
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      alert(`✅ ${participantId} has been disqualified`);
+      loadParticipantsRound2(); // Refresh table
+    } else {
+      alert(`⚠️ ${data.message || "Failed to disqualify"}`);
+    }
+  } catch (error) {
+    console.error("Disqualify error:", error);
+    alert("❌ Disqualification failed");
+  }
+}
+
+// ===== INITIAL LOAD =====
 loadParticipantsRound2();
