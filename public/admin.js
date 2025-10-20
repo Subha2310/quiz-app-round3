@@ -2,7 +2,7 @@ async function loadParticipantsRound2() {
   try {
     const res = await fetch("/api/participants_round2"); // ✅ fetch from round2 table
     if (!res.ok) throw new Error("Failed to fetch participants");
-    let participants = await res.json();
+    let participants_round2 = await res.json();
 
     // ===== Sort participants =====
     participants_round2.sort((a, b) => {

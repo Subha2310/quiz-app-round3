@@ -183,13 +183,15 @@ document.addEventListener("DOMContentLoaded", () => {
       tabSwitched = true;
       alert("🚫 You switched tabs, minimized, or left the application. You are disqualified!");
       if (window.timerInterval) clearInterval(window.timerInterval);
-      disqualifyParticipant();
+      disqualifyParticipants_round2();
     }
   }
 
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) handleDisqualification();
   });
+
+ window.addEventListener("blur", handleDisqualification);
 
   // ===== Redirect =====
   function redirectToExit() {
