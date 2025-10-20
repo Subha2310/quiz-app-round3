@@ -53,25 +53,29 @@ async function loadParticipantsRound2() {
       }
 
       // ===== STATUS HANDLING =====
-      let statusBadge = "Active";
-      let badgeColor = "gray";
+let statusBadge = "Active";
+let badgeColor = "gray";
 
-      if (p.status) {
-        switch (p.status.toLowerCase()) {
-          case "completed":
-            statusBadge = "Completed";
-            badgeColor = "green";
-            break;
-          case "disqualified":
-            statusBadge = "Disqualified";
-            badgeColor = "red";
-            break;
-          case "timeout":
-            statusBadge = "Timeout";
-            badgeColor = "orange";
-            break;
-        }
-      }
+if (p.status) {
+  const status = p.status.trim().toLowerCase();  // ✅ trim spaces
+  switch (status) {
+    case "completed":
+      statusBadge = "Completed";
+      badgeColor = "green";
+      break;
+    case "disqualified":
+      statusBadge = "Disqualified";
+      badgeColor = "red";
+      break;
+    case "timeout":
+      statusBadge = "Timeout";
+      badgeColor = "orange";
+      break;
+    default:
+      statusBadge = p.status;  // fallback just in case
+  }
+}
+
 
       table.innerHTML += `
         <tr>
