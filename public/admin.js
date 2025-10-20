@@ -1,11 +1,12 @@
+// ===== LOAD PARTICIPANTS FOR ROUND 2 =====
 async function loadParticipantsRound2() {
   try {
-    const res = await fetch("/api/participants_round2"); // ✅ fetch from round2 table
+    const res = await fetch("/api/participants_round2");
     if (!res.ok) throw new Error("Failed to fetch participants");
-    let participants_round2 = await res.json();
+    const participants = await res.json();
 
-    // ===== Sort participants =====
-    participants_round2.sort((a, b) => {
+    // ===== SORT: score descending, then duration ascending =====
+    participants.sort((a, b) => {
       const scoreDiff = (b.score || 0) - (a.score || 0);
       if (scoreDiff !== 0) return scoreDiff;
 
@@ -19,6 +20,7 @@ async function loadParticipantsRound2() {
       return durationA - durationB;
     });
 
+    // ===== BUILD TABLE =====
     const table = document.getElementById("participants-table");
     table.innerHTML = `
       <tr>
@@ -31,20 +33,21 @@ async function loadParticipantsRound2() {
       </tr>
     `;
 
-    participants_round2.forEach((p) => {
+    participants.forEach(p => {
+      // Format submitted_at
       let formattedDate = "—";
-      let duration = "—";
-
       if (p.submitted_at) {
-        const timestamp = new Date(p.submitted_at);
-        if (!isNaN(timestamp)) {
-          formattedDate = timestamp.toLocaleString("en-GB", { 
+        const ts = new Date(p.submitted_at);
+        if (!isNaN(ts)) {
+          formattedDate = ts.toLocaleString("en-GB", {
             day: "2-digit", month: "2-digit", year: "numeric",
             hour: "2-digit", minute: "2-digit", hour12: true
           }).replace(",", "");
         }
       }
 
+      // Compute duration
+      let duration = "—";
       if (p.created_at && p.submitted_at) {
         const diffMs = new Date(p.submitted_at) - new Date(p.created_at);
         const minutes = Math.floor(diffMs / 60000);
@@ -52,31 +55,28 @@ async function loadParticipantsRound2() {
         duration = `${minutes}m ${seconds}s`;
       }
 
-      // ===== STATUS HANDLING =====
-let statusBadge = "Active";
-let badgeColor = "gray";
+      // Status badge
+      let statusBadge = "Active";
+      let badgeColor = "gray";
 
-if (p.status) {
-  const status = p.status.trim().toLowerCase();  // ✅ trim spaces
-  switch (status) {
-    case "completed":
-      statusBadge = "Completed";
-      badgeColor = "green";
-      break;
-    case "disqualified":
-      statusBadge = "Disqualified";
-      badgeColor = "red";
-      break;
-    case "timeout":
-      statusBadge = "Timeout";
-      badgeColor = "orange";
-      break;
-    default:
-      statusBadge = p.status;  // fallback just in case
-  }
-}
+      if (p.status) {
+        switch (p.status.toLowerCase()) {
+          case "completed":
+            statusBadge = "Completed";
+            badgeColor = "green";
+            break;
+          case "disqualified":
+            statusBadge = "Disqualified";
+            badgeColor = "red";
+            break;
+          case "timeout":
+            statusBadge = "Timeout";
+            badgeColor = "orange";
+            break;
+        }
+      }
 
-
+      // Table row
       table.innerHTML += `
         <tr>
           <td>${p.id}</td>
@@ -89,8 +89,8 @@ if (p.status) {
       `;
     });
 
-  } catch (error) {
-    console.error("Failed to load participants:", error);
+  } catch (err) {
+    console.error("Failed to load participants:", err);
     alert("Failed to load Round 2 participants data");
   }
 }
