@@ -28,7 +28,6 @@ async function loadParticipantsRound2() {
         <th>Score</th>
         <th>Submitted At</th>
         <th>Duration</th>
-        <th>Action</th>
       </tr>
     `;
 
@@ -53,22 +52,26 @@ async function loadParticipantsRound2() {
         duration = `${minutes}m ${seconds}s`;
       }
 
-      let statusBadge = "";
+      // ===== STATUS HANDLING =====
+      let statusBadge = "Active";
       let badgeColor = "gray";
+
       if (p.status) {
         switch (p.status.toLowerCase()) {
-          case "completed": statusBadge = "Completed"; badgeColor = "green"; break;
-          case "disqualified": statusBadge = "Disqualified"; badgeColor = "red"; break;
-          case "timeout": statusBadge = "Timeout"; badgeColor = "orange"; break;
-          default: statusBadge = p.status;
+          case "completed":
+            statusBadge = "Completed";
+            badgeColor = "green";
+            break;
+          case "disqualified":
+            statusBadge = "Disqualified";
+            badgeColor = "red";
+            break;
+          case "timeout":
+            statusBadge = "Timeout";
+            badgeColor = "orange";
+            break;
         }
       }
-
-      // Add a Disqualify button only for active users
-      const actionButton =
-        p.status?.toLowerCase() === "active"
-          ? `<button onclick="disqualifyParticipant('${p.id}')" style="background:red;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Disqualify</button>`
-          : "—";
 
       table.innerHTML += `
         <tr>
@@ -78,7 +81,6 @@ async function loadParticipantsRound2() {
           <td>${p.score ?? 0}</td>
           <td>${formattedDate}</td>
           <td>${duration}</td>
-          <td>${actionButton}</td>
         </tr>
       `;
     });
@@ -86,30 +88,6 @@ async function loadParticipantsRound2() {
   } catch (error) {
     console.error("Failed to load participants:", error);
     alert("Failed to load Round 2 participants data");
-  }
-}
-
-// ===== DISQUALIFY FUNCTION =====
-async function disqualifyParticipant(participantId) {
-  if (!confirm(`Are you sure you want to disqualify ${participantId}?`)) return;
-
-  try {
-    const res = await fetch("/api/disqualify_round2", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ participantId }),
-    });
-
-    const data = await res.json();
-    if (data.success) {
-      alert(`✅ ${participantId} has been disqualified`);
-      loadParticipantsRound2(); // Refresh table
-    } else {
-      alert(`⚠️ ${data.message || "Failed to disqualify"}`);
-    }
-  } catch (error) {
-    console.error("Disqualify error:", error);
-    alert("❌ Disqualification failed");
   }
 }
 
