@@ -180,13 +180,9 @@ app.post("/api/disqualify_round2", async (req, res) => {
       .status(400)
       .json({ success: false, error: "Missing participantId" });
 
-  try {
-    // Force-update status and confirm with RETURNING
+   try {
     const result = await pool.query(
-      `UPDATE participants_round2
-       SET status = 'disqualified', submitted_at = NOW()
-       WHERE id = $1
-       RETURNING id, username, status, score, submitted_at;`,
+      "UPDATE participants_round2 SET status='disqualified', submitted_at=NOW() WHERE id=$1 AND status='active' RETURNING *",
       [participantId]
     );
 
@@ -195,7 +191,7 @@ app.post("/api/disqualify_round2", async (req, res) => {
         success: false,
         message: "Already submitted/disqualified", participant: result.rows[0],
       });
-    console.log("✅ Disqualified:", result.rows[0]);
+    
     res.json({ success: true, message: "Disqualified" });
   } catch (err) {
     console.error("Disqualify error:", err);
