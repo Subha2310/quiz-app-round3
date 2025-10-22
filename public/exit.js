@@ -65,6 +65,16 @@ document.addEventListener("DOMContentLoaded", () => {
     durationElem.textContent = "-";
   }
 
+
+// ✅ Update backend if participant was disqualified
+if (quizStatus === "disqualified" && participant?.id) {
+  fetch("/api/disqualify_round2", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ participantId: participant.id }),
+  }).catch((err) => console.error("Disqualify update failed:", err));
+}
+
   // ✅ Clear temporary data
   localStorage.removeItem("answers");
 });

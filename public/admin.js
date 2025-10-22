@@ -59,7 +59,7 @@ async function loadParticipantsRound2() {
 
       if (p.status) {
         const normalizedStatus = p.status.trim().toLowerCase();
-        switch (normalizedStatus) {
+         switch (p.status.toLowerCase()) {
           case "completed":
             statusBadge = "Completed";
             badgeColor = "green";
