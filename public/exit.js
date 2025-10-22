@@ -1,3 +1,9 @@
+// ===== Prevent going back to quiz page =====
+window.history.pushState(null, "", window.location.href);
+window.addEventListener("popstate", function () {
+  window.location.replace("/"); // Redirect to index page
+});
+
 // ===== exit.js =====
 document.addEventListener("DOMContentLoaded", () => {
   const participant = JSON.parse(localStorage.getItem("participant")) || {};
@@ -35,30 +41,29 @@ document.addEventListener("DOMContentLoaded", () => {
     scoreRow.classList.add("hidden");
   }
 
-// ✅ Show score only if not disqualified
-if (quizStatus !== "disqualified") scoreElem.textContent = score;
+  // ✅ Show score only if not disqualified
+  if (quizStatus !== "disqualified") scoreElem.textContent = score;
 
-// ✅ Duration calculation (skip for disqualified)
-if (quizStatus !== "disqualified") {
-  if (createdAtStr && submittedAtStr) {
-    const createdAt = new Date(createdAtStr);
-    const submittedAt = new Date(submittedAtStr);
+  // ✅ Duration calculation (skip for disqualified)
+  if (quizStatus !== "disqualified") {
+    if (createdAtStr && submittedAtStr) {
+      const createdAt = new Date(createdAtStr);
+      const submittedAt = new Date(submittedAtStr);
 
-    if (!isNaN(createdAt) && !isNaN(submittedAt)) {
-      const diffMs = submittedAt - createdAt;
-      const minutes = Math.floor(diffMs / 60000);
-      const seconds = Math.floor((diffMs % 60000) / 1000);
-      durationElem.textContent = `${minutes}m ${seconds}s`;
+      if (!isNaN(createdAt) && !isNaN(submittedAt)) {
+        const diffMs = submittedAt - createdAt;
+        const minutes = Math.floor(diffMs / 60000);
+        const seconds = Math.floor((diffMs % 60000) / 1000);
+        durationElem.textContent = `${minutes}m ${seconds}s`;
+      } else {
+        durationElem.textContent = "N/A";
+      }
     } else {
       durationElem.textContent = "N/A";
     }
   } else {
-    durationElem.textContent = "N/A";
+    durationElem.textContent = "-";
   }
-} else {
-  durationElem.textContent = "-";
-}
-
 
   // ✅ Clear temporary data
   localStorage.removeItem("answers");
