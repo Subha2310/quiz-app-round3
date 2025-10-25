@@ -51,26 +51,32 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
   // ===== Render Questions =====
-  function renderQuestionsRound3() {
-    const submitBar = quizForm.querySelector(".submit-bar");
-    if (!submitBar) return;
+function renderQuestionsRound3() {
+  const submitBar = quizForm.querySelector(".submit-bar");
+  if (!submitBar) return;
 
-    questions.forEach((q, idx) => {
-      const block = document.createElement("div");
-      block.className = "question-block";
-      block.innerHTML = `
-        <h3>Q${idx + 1}. ${q.question}</h3>
-        <div class="options">
-          ${q.options.map(opt => `
-            <label class="option">
-              <input type="radio" name="q${q.id}" value="${opt}" /> ${opt}
-            </label>
-          `).join("")}
-        </div>
-      `;
-      quizForm.insertBefore(block, submitBar);
-    });
-  }
+  questions.forEach((q, idx) => {
+    const block = document.createElement("div");
+    block.className = "question-block";
+
+    // Use <pre> to preserve indentation and line breaks
+    block.innerHTML = `
+      <h3>Q${idx + 1}.</h3>
+      <pre style="white-space: pre-wrap; font-family: 'Courier New', Courier, monospace;">${q.question}</pre>
+      <div class="options">
+        ${q.options.map(opt => `
+          <label class="option">
+            <input type="radio" name="q${q.id}" value="${opt}" />
+            <pre style="margin:0; white-space: pre-wrap; font-family: 'Courier New', Courier, monospace;">${opt}</pre>
+          </label>
+        `).join("")}
+      </div>
+    `;
+
+    quizForm.insertBefore(block, submitBar);
+  });
+}
+
 
   // ===== Timer =====
   function startTimer() {

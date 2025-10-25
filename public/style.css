@@ -91,3 +91,21 @@ table th {
 table tr:nth-child(even) {
   background: #f2f2f2;
 }
+/* Preserve formatting for quiz questions/options */
+.question-block pre {
+  background: #f4f4f4;
+  padding: 10px;
+  border-radius: 6px;
+  font-family: 'Courier New', Courier, monospace;
+  white-space: pre-wrap; /* preserves line breaks and wraps long lines */
+  margin: 0; /* removes default pre margins */
+  overflow-x: auto; /* horizontal scroll if line is too long */
+}
+
+/* Option labels containing <pre> */
+.option pre {
+  background: transparent; /* use same background as option */
+  padding: 0;
+  margin: 0;
+  font-size: 15px;
+}
