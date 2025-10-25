@@ -163,7 +163,7 @@
     <h2>🔥 Erronix🔥 2025</h2>
     <div class="title-sub">
       <span class="title-main">MindClash</span>
-      <span class="title-round">Round 2: Medium Level</span>
+      <span class="title-round">Round 3: Hard Level</span>
     </div>
 
     <form id="login-form">
@@ -178,8 +178,8 @@
         <ul>
           <li>Press F11 for better experience.</li>
           <li>Don't switch tabs. Immediate disqualification if switched.</li>
-          <li>Submit before the timer ends - 7 mins.</li>
-          <li>Consists of 15 questions.</li>
+          <li>Submit before the timer ends - 12 mins.</li>
+          <li>Consists of 10 questions.</li>
         </ul>
       </div>
 
@@ -204,7 +204,7 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
   }
 
   try {
-    const checkRes = await fetch(`/api/check_participant_round2/${participantId}`);
+    const checkRes = await fetch(`/api/check_participant_round3/${participantId}`);
     const checkData = await checkRes.json();
 
     if (checkData.exists) {
@@ -218,7 +218,7 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
       return;
     }
 
-    const res = await fetch("/api/login_round2", {
+    const res = await fetch("/api/login_round3", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: participantId, name: username })

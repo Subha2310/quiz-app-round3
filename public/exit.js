@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // ✅ Update backend if participant was disqualified
 if (quizStatus === "disqualified" && participant?.id) {
-  fetch("/api/disqualify_round2", {
+  fetch("/api/disqualify_round3", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ participantId: participant.id }),

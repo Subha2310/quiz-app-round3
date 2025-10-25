@@ -1,11 +1,11 @@
-async function loadParticipantsRound2() {
+async function loadParticipantsRound3() {
   try {
-    const res = await fetch("/api/participants_round2");
+    const res = await fetch("/api/participants_round3");
     if (!res.ok) throw new Error("Failed to fetch participants");
-    let participants_round2 = await res.json();
+    let participants_round3 = await res.json();
 
     // ===== Sort participants by score descending, then duration ascending =====
-    participants_round2.sort((a, b) => {
+    participants_round3.sort((a, b) => {
       const scoreDiff = (b.score || 0) - (a.score || 0);
       if (scoreDiff !== 0) return scoreDiff;
 
@@ -31,7 +31,7 @@ async function loadParticipantsRound2() {
       </tr>
     `;
 
-    participants_round2.forEach((p) => {
+    participants_round3.forEach((p) => {
       // ===== Format submission date =====
       let formattedDate = "—";
       if (p.submitted_at) {
@@ -91,9 +91,9 @@ async function loadParticipantsRound2() {
 
   } catch (error) {
     console.error("Failed to load participants:", error);
-    alert("Failed to load Round 2 participants data");
+    alert("Failed to load Round 3 participants data");
   }
 }
 
 // ===== INITIAL LOAD =====
-loadParticipantsRound2();
+loadParticipantsRound3();

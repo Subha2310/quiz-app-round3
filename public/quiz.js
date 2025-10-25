@@ -20,14 +20,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let questions = [];
   let answers = {};
-  let totalTime = 7 * 60; // 7 minutes
+  let totalTime = 12 * 60; // 12 minutes
   let timerInterval;
   let quizEnded = false;
   let tabSwitched = false;
   let submitting = false;
 
-  // ===== Fetch Round 2 Questions =====
-  fetch("/api/questions_round2")
+  // ===== Fetch Round 3 Questions =====
+  fetch("/api/questions_round3")
     .then(res => res.json())
     .then(data => {
       questions = data.map(q => ({
@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
         options: Array.isArray(q.options) ? q.options : JSON.parse(q.options)
       }));
 
-      renderQuestionsRound2();
+      renderQuestionsRound3();
 
       // ✅ Set createdAt when quiz starts
       if (!localStorage.getItem("createdAt")) {
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
   // ===== Render Questions =====
-  function renderQuestionsRound2() {
+  function renderQuestionsRound3() {
     const submitBar = quizForm.querySelector(".submit-bar");
     if (!submitBar) return;
 
@@ -121,7 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem("submittedAt", submitTime);
       localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
 
-      const res = await fetch("/api/submit_round2", {
+      const res = await fetch("/api/submit_round3", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -156,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===== Disqualification =====
-  async function disqualifyParticipants_round2() {
+  async function disqualifyParticipants_round3() {
     if (quizEnded || submitting) return;
 
     submitting = true;
@@ -183,7 +183,7 @@ document.addEventListener("DOMContentLoaded", () => {
       tabSwitched = true;
       alert("🚫 You switched tabs, minimized, or left the application. You are disqualified!");
       if (window.timerInterval) clearInterval(window.timerInterval);
-      disqualifyParticipants_round2();
+      disqualifyParticipants_round3();
     }
   }
 

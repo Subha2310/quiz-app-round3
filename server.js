@@ -38,14 +38,14 @@ app.get("/", (req, res) => {
 });
 
 // ===== LOGIN =====
-app.post("/api/login_round2", async (req, res) => {
+app.post("/api/login_round3", async (req, res) => {
   const { id, name } = req.body;
   if (!id || !name)
     return res.status(400).json({ success: false, error: "ID and Name required" });
 
   try {
     const existing = await pool.query(
-      "SELECT * FROM participants_round2 WHERE id=$1",
+      "SELECT * FROM participants_round3 WHERE id=$1",
       [id]
     );
 
@@ -61,7 +61,7 @@ app.post("/api/login_round2", async (req, res) => {
     }
 
     const result = await pool.query(
-      "INSERT INTO participants_round2 (id, username, status, score, created_at) VALUES ($1, $2, 'active', 0, NOW()) RETURNING *",
+      "INSERT INTO participants_round3 (id, username, status, score, created_at) VALUES ($1, $2, 'active', 0, NOW()) RETURNING *",
       [id, name]
     );
 
@@ -73,10 +73,10 @@ app.post("/api/login_round2", async (req, res) => {
 });
 
 // ===== CHECK PARTICIPANT =====
-app.get("/api/check_participant_round2/:id", async (req, res) => {
+app.get("/api/check_participant_round3/:id", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, status FROM participants_round2 WHERE id=$1",
+      "SELECT id, status FROM participants_round3 WHERE id=$1",
       [req.params.id]
     );
     if (result.rows.length === 0) return res.json({ exists: false });
@@ -88,10 +88,10 @@ app.get("/api/check_participant_round2/:id", async (req, res) => {
 });
 
 // ===== FETCH QUESTIONS =====
-app.get("/api/questions_round2", async (req, res) => {
+app.get("/api/questions_round3", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, question, options, correct_answer FROM questions_round2 ORDER BY id ASC"
+      "SELECT id, question, options, correct_answer FROM questions_round3 ORDER BY id ASC"
     );
 
     const questions = result.rows.map((q) => ({
@@ -109,7 +109,7 @@ app.get("/api/questions_round2", async (req, res) => {
 });
 
 // ===== SUBMIT QUIZ =====
-app.post("/api/submit_round2", async (req, res) => {
+app.post("/api/submit_round3", async (req, res) => {
   const { participantId, answers, status } = req.body;
   if (!participantId || !answers || !status)
     return res.status(400).json({ success: false, error: "Invalid request" });
@@ -125,7 +125,7 @@ app.post("/api/submit_round2", async (req, res) => {
 
   try {
     const userCheck = await pool.query(
-      "SELECT * FROM participants_round2 WHERE id=$1 AND status='active'",
+      "SELECT * FROM participants_round3 WHERE id=$1 AND status='active'",
       [participantId]
     );
 
@@ -135,7 +135,7 @@ app.post("/api/submit_round2", async (req, res) => {
         .json({ success: false, error: "Already submitted or disqualified" });
 
     const questionsRes = await pool.query(
-      "SELECT id, correct_answer FROM questions_round2"
+      "SELECT id, correct_answer FROM questions_round3"
     );
     const questionMap = new Map(
       questionsRes.rows.map((q) => [q.id, q.correct_answer])
@@ -155,7 +155,7 @@ app.post("/api/submit_round2", async (req, res) => {
         : "disqualified";
 
     const updateRes = await pool.query(
-      "UPDATE participants_round2 SET status=$1, score=$2, submitted_at=NOW() WHERE id=$3 RETURNING score, created_at, submitted_at",
+      "UPDATE participants_round3 SET status=$1, score=$2, submitted_at=NOW() WHERE id=$3 RETURNING score, created_at, submitted_at",
       [finalStatus, score, participantId]
     );
 
@@ -173,14 +173,14 @@ app.post("/api/submit_round2", async (req, res) => {
 });
 
 // ===== DISQUALIFY =====
-app.post("/api/disqualify_round2", async (req, res) => {
+app.post("/api/disqualify_round3", async (req, res) => {
   const { participantId } = req.body;
   if (!participantId)
     return res.status(400).json({ success: false, error: "Missing participantId" });
 
   try {
     const result = await pool.query(
-      "UPDATE participants_round2 SET status='disqualified', submitted_at=NOW() WHERE id=$1 RETURNING *",
+      "UPDATE participants_round3 SET status='disqualified', submitted_at=NOW() WHERE id=$1 RETURNING *",
       [participantId]
     );
 
@@ -195,10 +195,10 @@ app.post("/api/disqualify_round2", async (req, res) => {
 });
 
 // ===== ADMIN DASHBOARD =====
-app.get("/api/participants_round2", async (req, res) => {
+app.get("/api/participants_round3", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, username, status, score, created_at, submitted_at FROM participants_round2 ORDER BY submitted_at DESC NULLS LAST, id ASC"
+      "SELECT id, username, status, score, created_at, submitted_at FROM participants_round3 ORDER BY submitted_at DESC NULLS LAST, id ASC"
     );
     res.json(result.rows);
   } catch (err) {
