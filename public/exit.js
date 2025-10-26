@@ -1,8 +1,10 @@
-// ===== Prevent going back to quiz page =====
-window.history.pushState(null, "", window.location.href);
+// Prevent going back to quiz page from exit page
+window.history.pushState(null, null, window.location.href);
 window.addEventListener("popstate", function () {
-  window.location.replace("/"); // Redirect to index page
+  // Replace history with home page
+  window.location.replace("/"); 
 });
+
 // ===== exit.js =====
 document.addEventListener("DOMContentLoaded", () => {
   const participant = JSON.parse(localStorage.getItem("participant")) || {};

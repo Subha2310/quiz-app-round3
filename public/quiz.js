@@ -1,19 +1,25 @@
 // ===== quiz.js for Round 3 =====
+
 document.addEventListener("DOMContentLoaded", () => {
   const participant = JSON.parse(localStorage.getItem("participant"));
-
-  // ✅ Reset previous quiz data at the start
-  localStorage.removeItem("createdAt");
-  localStorage.removeItem("submittedAt");
-  localStorage.removeItem("score");
-  localStorage.removeItem("answers");
-  localStorage.removeItem("quizStatus");
 
   if (!participant || !participant.id) {
     alert("❌ No participant info found. Redirecting to login.");
     window.location.href = "/";
     return;
   }
+
+  // ✅ Redirect to exit if quiz was already submitted or disqualified
+  if (localStorage.getItem("submittedAt") && localStorage.getItem("quizStatus")) {
+    window.location.replace("/exit.html");
+    return;
+  }
+
+  // ✅ Clear only temporary quiz data for a new quiz attempt
+  localStorage.removeItem("answers");
+  localStorage.removeItem("createdAt");
+  localStorage.removeItem("score");
+  // Do NOT remove submittedAt or quizStatus
 
   const quizForm = document.getElementById("quiz-form");
   const timerElem = document.getElementById("timer");
@@ -59,7 +65,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const block = document.createElement("div");
       block.className = "question-block";
 
-      // Question text with Times New Roman
       block.innerHTML = `
         <h3>Q${idx + 1}.</h3>
         <pre style="white-space: pre-wrap; font-family: 'Times New Roman', Times, serif;">${q.question}</pre>
@@ -202,6 +207,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== Redirect =====
   function redirectToExit() {
-    window.location.href = "/exit.html";
+    window.location.replace("/exit.html"); // Use replace to prevent going back
   }
 });
