@@ -2,15 +2,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const participant = JSON.parse(localStorage.getItem("participant"));
 
-  // ✅ Reset previous quiz data at the start
-  localStorage.removeItem("createdAt");
-  localStorage.removeItem("submittedAt");
-  localStorage.removeItem("score");
-  localStorage.removeItem("quizStatus");
-
-  // Load saved answers if any
-  let answers = JSON.parse(localStorage.getItem("answers")) || {};
-
   if (!participant || !participant.id) {
     alert("❌ No participant info found. Redirecting to login.");
     window.location.href = "/";
@@ -19,6 +10,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const quizForm = document.getElementById("quiz-form");
   const timerElem = document.getElementById("timer");
+
+  // Load saved answers if any
+  let answers = JSON.parse(localStorage.getItem("answers")) || {};
 
   let questions = [];
   let totalTime = 12 * 60; // 12 minutes
@@ -39,7 +33,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       renderQuestionsRound3();
 
-      // ✅ Set createdAt when quiz starts
       if (!localStorage.getItem("createdAt")) {
         localStorage.setItem("createdAt", new Date().toISOString());
       }
@@ -61,13 +54,17 @@ document.addEventListener("DOMContentLoaded", () => {
       block.className = "question-block";
 
       block.innerHTML = `
-        <h3>Q${idx + 1}. ${q.question}</h3>
+        <h3>Q${idx + 1}.</h3>
+        <pre style="white-space: pre-wrap; font-family: 'Times New Roman', Times, serif;">${q.question}</pre>
         <div class="options">
           ${q.options.map(opt => `
             <label class="option">
-              <input type="radio" name="q${q.id}" value="${opt}" ${answers[q.id] === opt ? "checked" : ""}/> ${opt}
+              <input type="radio" name="q${q.id}" value="${opt}" ${answers[q.id] === opt ? "checked" : ""}/>
+              <div style="white-space: pre-wrap; font-family: 'Times New Roman', Times, serif;">
+                ${opt.replace(/\n/g, '<br>')}
+              </div>
             </label>
-          `).join("")}
+          `).join('')}
         </div>
       `;
 
@@ -95,10 +92,10 @@ document.addEventListener("DOMContentLoaded", () => {
     timerElem.textContent = `⏱ ${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   }
 
-  // ===== Capture Answers (real-time save) =====
+  // ===== Capture Answers & Save =====
   quizForm.addEventListener("change", (e) => {
     if (e.target.name && e.target.value) {
-      const qid = parseInt(e.target.name.replace("q", ""));
+      const qid = e.target.name.replace("q", "");
       answers[qid] = e.target.value;
       localStorage.setItem("answers", JSON.stringify(answers));
     }
@@ -130,10 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           participantId: participant.id,
-          answers: Object.keys(answers).map(qid => ({
-            questionId: parseInt(qid),
-            answer: answers[qid]
-          })),
+          answers, // full text answers
           status: timeout ? "timeout" : "completed"
         }),
       });
@@ -145,7 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.setItem("submittedAt", data.submitted_at);
         }
       } else {
-        console.warn("Submission failed:", data.message);
+        console.warn("Submission failed:", data.error || data.message);
       }
     } catch (err) {
       console.error("Submit error:", err);
@@ -156,7 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ===== Handle Timeout =====
+  // ===== Timeout Handling =====
   function handleTimeout() {
     alert("⏰ Time's up! Submitting your quiz automatically...");
     submitQuiz(true);
@@ -170,7 +164,7 @@ document.addEventListener("DOMContentLoaded", () => {
     quizEnded = true;
 
     try {
-      await fetch("/api/disqualify", {
+      await fetch("/api/disqualify_round3", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ participantId: participant.id })
@@ -184,7 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ===== Handle Tab Switch / Window Blur =====
+  // ===== Tab Switch / Window Blur =====
   function handleDisqualification() {
     if (!tabSwitched && !quizEnded && !submitting) {
       tabSwitched = true;
@@ -200,7 +194,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("blur", handleDisqualification);
 
-  // ===== Redirect =====
+  // ===== Redirect to Exit =====
   function redirectToExit() {
     window.location.href = "/exit.html";
   }
