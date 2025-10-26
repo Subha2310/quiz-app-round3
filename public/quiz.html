@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@500&display=swap" rel="stylesheet">
 
   <style>
+    /* --- General Page Styles --- */
     body {
       font-family: "Poppins", "Segoe UI", Roboto, sans-serif;
       background: #e2e2e2;
@@ -74,10 +75,11 @@
       margin-bottom: 25px;
     }
 
+    /* --- Question Blocks --- */
     .question-block {
-      margin-bottom: 25px;
+      margin-bottom: 20px;
       background: #f2f2f5;
-      padding: 18px 22px;
+      padding: 15px 20px; /* slightly smaller padding */
       border-radius: 10px;
       border-left: 5px solid #0b5394;
       transition: all 0.3s ease;
@@ -87,37 +89,47 @@
     .question-block:hover { background: #e6e6e9; }
 
     .question-block h3 {
-      font-size: 17px;
+      font-size: 16px; /* slightly smaller */
       font-weight: 500;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       color: #202124;
     }
 
-    .options { display: flex; flex-direction: column; gap: 10px; }
+    /* --- Options --- */
+    .options { display: flex; flex-direction: column; gap: 8px; }
 
     .option {
       background: #ffffff;
       border: 1px solid #c1c1c1;
       border-radius: 8px;
-      padding: 10px 12px;
+      padding: 8px 12px;      /* medium size */
       display: flex;
       align-items: center;
       cursor: pointer;
       transition: all 0.2s ease;
+      font-size: 14px;        /* medium font */
     }
 
     .option:hover {
-  background: #f0f0f0;
-  border-color: #0b5394;
-}
-    input[type="radio"] { margin-right: 10px; accent-color: #0b5394; transform: scale(1.2); }
-    /* If using <pre> inside options */
-.option pre {
-  background: transparent;
-  padding: 0;
-  margin: 0;
-  font-size: 14px;         /* same as option */
-}
+      background: #f0f0f0;
+      border-color: #0b5394;
+    }
+
+    input[type="radio"] {
+      margin-right: 8px;      /* smaller gap */
+      accent-color: #0b5394;
+      transform: scale(1);    /* normal size */
+    }
+
+    .option pre {
+      background: transparent;
+      padding: 0;
+      margin: 0;
+      font-size: 14px;        /* same as option text */
+      white-space: pre-wrap;
+    }
+
+    /* --- Submit Button --- */
     .submit-bar { padding: 20px 0; text-align: center; margin-top: 20px; }
 
     .submit-bar button {
@@ -134,10 +146,19 @@
 
     .submit-bar button:hover { transform: scale(1.05); background: #1e3c72; }
 
-    footer { text-align: center; color: #64748b; font-size: 14px; margin-top: 40px; }
+    footer {
+      text-align: center;
+      color: #64748b;
+      font-size: 14px;
+      margin-top: 40px;
+    }
 
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
+    /* --- Responsive --- */
     @media (max-width: 600px) {
       .quiz-wrapper { padding: 25px; }
       h1 { font-size: 28px; }
