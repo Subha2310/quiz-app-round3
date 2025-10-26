@@ -69,7 +69,7 @@ function renderQuestionsRound3() {
          return `
            <label class="option">
               <input type="radio" name="q${q.id}" value="${letter}" />
-              <pre style="margin:0; white-space: pre-wrap; font-family: 'Courier New', Courier, monospace;">${letter.toUpperCase()}. ${opt}</pre>
+              <div style="white-space: pre-wrap; font-family: 'Courier New', Courier, monospace;">${letter.toUpperCase()}. ${opt.replace(/\n/g, '<br>')}</div>
            </label>
   `       ;
          }).join("")}
