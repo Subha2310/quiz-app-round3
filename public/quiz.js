@@ -6,8 +6,10 @@ document.addEventListener("DOMContentLoaded", () => {
   localStorage.removeItem("createdAt");
   localStorage.removeItem("submittedAt");
   localStorage.removeItem("score");
-  localStorage.removeItem("answers");
   localStorage.removeItem("quizStatus");
+
+  // Load saved answers if any
+  let answers = JSON.parse(localStorage.getItem("answers")) || {};
 
   if (!participant || !participant.id) {
     alert("❌ No participant info found. Redirecting to login.");
@@ -19,7 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const timerElem = document.getElementById("timer");
 
   let questions = [];
-  let answers = {};
   let totalTime = 12 * 60; // 12 minutes
   let timerInterval;
   let quizEnded = false;
@@ -58,16 +59,18 @@ document.addEventListener("DOMContentLoaded", () => {
     questions.forEach((q, idx) => {
       const block = document.createElement("div");
       block.className = "question-block";
+
       block.innerHTML = `
         <h3>Q${idx + 1}. ${q.question}</h3>
         <div class="options">
           ${q.options.map(opt => `
             <label class="option">
-              <input type="radio" name="q${q.id}" value="${opt}" /> ${opt}
+              <input type="radio" name="q${q.id}" value="${opt}" ${answers[q.id] === opt ? "checked" : ""}/> ${opt}
             </label>
           `).join("")}
         </div>
       `;
+
       quizForm.insertBefore(block, submitBar);
     });
   }
@@ -75,12 +78,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== Timer =====
   function startTimer() {
     updateTimerDisplay();
-    window.timerInterval = setInterval(() => {
+    timerInterval = setInterval(() => {
       if (quizEnded) return;
       totalTime--;
       updateTimerDisplay();
       if (totalTime <= 0) {
-        clearInterval(window.timerInterval);
+        clearInterval(timerInterval);
         handleTimeout();
       }
     }, 1000);
@@ -92,11 +95,12 @@ document.addEventListener("DOMContentLoaded", () => {
     timerElem.textContent = `⏱ ${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   }
 
-  // ===== Capture Answers =====
+  // ===== Capture Answers (real-time save) =====
   quizForm.addEventListener("change", (e) => {
     if (e.target.name && e.target.value) {
-      const qid = e.target.name.replace("q", "");
+      const qid = parseInt(e.target.name.replace("q", ""));
       answers[qid] = e.target.value;
+      localStorage.setItem("answers", JSON.stringify(answers));
     }
   });
 
@@ -126,7 +130,10 @@ document.addEventListener("DOMContentLoaded", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           participantId: participant.id,
-          answers,
+          answers: Object.keys(answers).map(qid => ({
+            questionId: parseInt(qid),
+            answer: answers[qid]
+          })),
           status: timeout ? "timeout" : "completed"
         }),
       });
@@ -182,7 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!tabSwitched && !quizEnded && !submitting) {
       tabSwitched = true;
       alert("🚫 You switched tabs, minimized, or left the application. You are disqualified!");
-      if (window.timerInterval) clearInterval(window.timerInterval);
+      if (timerInterval) clearInterval(timerInterval);
       disqualifyParticipants_round3();
     }
   }
@@ -191,7 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.hidden) handleDisqualification();
   });
 
- window.addEventListener("blur", handleDisqualification);
+  window.addEventListener("blur", handleDisqualification);
 
   // ===== Redirect =====
   function redirectToExit() {
