@@ -58,23 +58,16 @@ document.addEventListener("DOMContentLoaded", () => {
     questions.forEach((q, idx) => {
       const block = document.createElement("div");
       block.className = "question-block";
-
-      // Question text with Times New Roman
       block.innerHTML = `
-        <h3>Q${idx + 1}.</h3>
-        <pre style="white-space: pre-wrap; font-family: 'Times New Roman', Times, serif;">${q.question}</pre>
+        <h3>Q${idx + 1}. ${q.question}</h3>
         <div class="options">
-          ${q.options.map((opt, i) => `
+          ${q.options.map(opt => `
             <label class="option">
-              <input type="radio" name="q${q.id}" value="${String.fromCharCode(97 + i)}" />
-              <div style="white-space: pre-wrap; font-family: 'Times New Roman', Times, serif;">
-                ${opt.replace(/\n/g, '<br>')}
-              </div>
+              <input type="radio" name="q${q.id}" value="${opt}" /> ${opt}
             </label>
-          `).join('')}
+          `).join("")}
         </div>
       `;
-
       quizForm.insertBefore(block, submitBar);
     });
   }
@@ -128,7 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem("submittedAt", submitTime);
       localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
 
-      const res = await fetch("/api/submit_round3", {
+      const res = await fetch("/api/submit_round2", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -163,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===== Disqualification =====
-  async function disqualifyParticipants_round3() {
+  async function disqualifyParticipants_round2() {
     if (quizEnded || submitting) return;
 
     submitting = true;
@@ -198,7 +191,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.hidden) handleDisqualification();
   });
 
-  window.addEventListener("blur", handleDisqualification);
+ window.addEventListener("blur", handleDisqualification);
 
   // ===== Redirect =====
   function redirectToExit() {
