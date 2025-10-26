@@ -51,36 +51,33 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
   // ===== Render Questions =====
-function renderQuestionsRound3() {
-  const submitBar = quizForm.querySelector(".submit-bar");
-  if (!submitBar) return;
+  function renderQuestionsRound3() {
+    const submitBar = quizForm.querySelector(".submit-bar");
+    if (!submitBar) return;
 
-  questions.forEach((q, idx) => {
-    const block = document.createElement("div");
-    block.className = "question-block";
+    questions.forEach((q, idx) => {
+      const block = document.createElement("div");
+      block.className = "question-block";
 
-    // Use <pre> to preserve indentation and line breaks
-    block.innerHTML = `
-      <h3>Q${idx + 1}.</h3>
-      <pre style="white-space: pre-wrap; font-family: 'Times New Roman', Times, serif;">${q.question}</pre>
-      <div class="options">
-        ${q.options.map((opt, i) => {
-         const letter = String.fromCharCode(97 + i); // a, b, c, d
-         return `
-           <label class="option">
-              <input type="radio" name="q${q.id}" value="${letter}" />
-              <div style="white-space: pre-wrap; font-family: 'Times New Roman', Times, serif;">${letter.toUpperCase()}. ${opt.replace(/\n/g, '<br>')}</div>
+      // Question text with Times New Roman
+      block.innerHTML = `
+        <h3>Q${idx + 1}.</h3>
+        <pre style="white-space: pre-wrap; font-family: 'Times New Roman', Times, serif;">${q.question}</pre>
+        <div class="options">
+          ${q.options.map((opt, i) => `
+            <label class="option">
+              <input type="radio" name="q${q.id}" value="${String.fromCharCode(97 + i)}" />
+              <div style="white-space: pre-wrap; font-family: 'Times New Roman', Times, serif;">
+                ${opt.replace(/\n/g, '<br>')}
+              </div>
+            </label>
+          `).join('')}
+        </div>
+      `;
 
-           </label>
-  `       ;
-         }).join("")}
-      </div>
-    `;
-
-    quizForm.insertBefore(block, submitBar);
-  });
-}
-
+      quizForm.insertBefore(block, submitBar);
+    });
+  }
 
   // ===== Timer =====
   function startTimer() {
@@ -201,7 +198,7 @@ function renderQuestionsRound3() {
     if (document.hidden) handleDisqualification();
   });
 
- window.addEventListener("blur", handleDisqualification);
+  window.addEventListener("blur", handleDisqualification);
 
   // ===== Redirect =====
   function redirectToExit() {
