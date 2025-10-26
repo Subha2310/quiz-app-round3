@@ -2,6 +2,13 @@
 document.addEventListener("DOMContentLoaded", () => {
   const participant = JSON.parse(localStorage.getItem("participant"));
 
+  // ✅ Reset previous quiz data at the start
+  localStorage.removeItem("createdAt");
+  localStorage.removeItem("submittedAt");
+  localStorage.removeItem("score");
+  localStorage.removeItem("answers");
+  localStorage.removeItem("quizStatus");
+
   if (!participant || !participant.id) {
     alert("❌ No participant info found. Redirecting to login.");
     window.location.href = "/";
@@ -11,10 +18,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const quizForm = document.getElementById("quiz-form");
   const timerElem = document.getElementById("timer");
 
-  // Load saved answers if any
-  let answers = JSON.parse(localStorage.getItem("answers")) || {};
-
   let questions = [];
+  let answers = {};
   let totalTime = 12 * 60; // 12 minutes
   let timerInterval;
   let quizEnded = false;
@@ -33,6 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       renderQuestionsRound3();
 
+      // ✅ Set createdAt when quiz starts
       if (!localStorage.getItem("createdAt")) {
         localStorage.setItem("createdAt", new Date().toISOString());
       }
@@ -53,13 +59,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const block = document.createElement("div");
       block.className = "question-block";
 
+      // Question text with Times New Roman
       block.innerHTML = `
         <h3>Q${idx + 1}.</h3>
         <pre style="white-space: pre-wrap; font-family: 'Times New Roman', Times, serif;">${q.question}</pre>
         <div class="options">
-          ${q.options.map(opt => `
+          ${q.options.map((opt, i) => `
             <label class="option">
-              <input type="radio" name="q${q.id}" value="${opt}" ${answers[q.id] === opt ? "checked" : ""}/>
+              <input type="radio" name="q${q.id}" value="${String.fromCharCode(97 + i)}" />
               <div style="white-space: pre-wrap; font-family: 'Times New Roman', Times, serif;">
                 ${opt.replace(/\n/g, '<br>')}
               </div>
@@ -75,12 +82,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== Timer =====
   function startTimer() {
     updateTimerDisplay();
-    timerInterval = setInterval(() => {
+    window.timerInterval = setInterval(() => {
       if (quizEnded) return;
       totalTime--;
       updateTimerDisplay();
       if (totalTime <= 0) {
-        clearInterval(timerInterval);
+        clearInterval(window.timerInterval);
         handleTimeout();
       }
     }, 1000);
@@ -92,12 +99,11 @@ document.addEventListener("DOMContentLoaded", () => {
     timerElem.textContent = `⏱ ${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   }
 
-  // ===== Capture Answers & Save =====
+  // ===== Capture Answers =====
   quizForm.addEventListener("change", (e) => {
     if (e.target.name && e.target.value) {
       const qid = e.target.name.replace("q", "");
       answers[qid] = e.target.value;
-      localStorage.setItem("answers", JSON.stringify(answers));
     }
   });
 
@@ -127,7 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           participantId: participant.id,
-          answers, // full text answers
+          answers,
           status: timeout ? "timeout" : "completed"
         }),
       });
@@ -139,7 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.setItem("submittedAt", data.submitted_at);
         }
       } else {
-        console.warn("Submission failed:", data.error || data.message);
+        console.warn("Submission failed:", data.message);
       }
     } catch (err) {
       console.error("Submit error:", err);
@@ -150,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ===== Timeout Handling =====
+  // ===== Handle Timeout =====
   function handleTimeout() {
     alert("⏰ Time's up! Submitting your quiz automatically...");
     submitQuiz(true);
@@ -164,7 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
     quizEnded = true;
 
     try {
-      await fetch("/api/disqualify_round3", {
+      await fetch("/api/disqualify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ participantId: participant.id })
@@ -178,12 +184,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ===== Tab Switch / Window Blur =====
+  // ===== Handle Tab Switch / Window Blur =====
   function handleDisqualification() {
     if (!tabSwitched && !quizEnded && !submitting) {
       tabSwitched = true;
       alert("🚫 You switched tabs, minimized, or left the application. You are disqualified!");
-      if (timerInterval) clearInterval(timerInterval);
+      if (window.timerInterval) clearInterval(window.timerInterval);
       disqualifyParticipants_round3();
     }
   }
@@ -194,7 +200,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("blur", handleDisqualification);
 
-  // ===== Redirect to Exit =====
+  // ===== Redirect =====
   function redirectToExit() {
     window.location.href = "/exit.html";
   }
