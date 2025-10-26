@@ -1,4 +1,4 @@
-// ===== quiz.js for Round 2 =====
+// ===== quiz.js for Round 3 =====
 document.addEventListener("DOMContentLoaded", () => {
   const participant = JSON.parse(localStorage.getItem("participant"));
 
@@ -64,12 +64,15 @@ function renderQuestionsRound3() {
       <h3>Q${idx + 1}.</h3>
       <pre style="white-space: pre-wrap; font-family: 'Courier New', Courier, monospace;">${q.question}</pre>
       <div class="options">
-        ${q.options.map(opt => `
-          <label class="option">
-            <input type="radio" name="q${q.id}" value="${opt}" />
-            <pre style="margin:0; white-space: pre-wrap; font-family: 'Courier New', Courier, monospace;">${opt}</pre>
-          </label>
-        `).join("")}
+        ${q.options.map((opt, i) => {
+         const letter = String.fromCharCode(97 + i); // a, b, c, d
+         return `
+           <label class="option">
+              <input type="radio" name="q${q.id}" value="${letter}" />
+              <pre style="margin:0; white-space: pre-wrap; font-family: 'Courier New', Courier, monospace;">${letter.toUpperCase()}. ${opt}</pre>
+           </label>
+  `       ;
+         }).join("")}
       </div>
     `;
 
