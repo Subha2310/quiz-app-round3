@@ -1,27 +1,19 @@
 // ===== quiz.js for Round 3 =====
-
 document.addEventListener("DOMContentLoaded", () => {
   const participant = JSON.parse(localStorage.getItem("participant"));
+
+  // ✅ Reset previous quiz data at the start
+  localStorage.removeItem("createdAt");
+  localStorage.removeItem("submittedAt");
+  localStorage.removeItem("score");
+  localStorage.removeItem("answers");
+  localStorage.removeItem("quizStatus");
 
   if (!participant || !participant.id) {
     alert("❌ No participant info found. Redirecting to login.");
     window.location.href = "/";
     return;
   }
-
-  // ✅ Redirect to exit if quiz was already submitted or disqualified
-  const submittedAt = localStorage.getItem("submittedAt");
-  const quizStatus = localStorage.getItem("quizStatus");
-  if (submittedAt && quizStatus) {
-    window.location.replace("/exit.html");
-    return;
-  }
-
-  // ✅ Clear only temporary data for a new quiz attempt
-  localStorage.removeItem("answers");
-  localStorage.removeItem("createdAt");
-  localStorage.removeItem("score");
-  // Do NOT remove submittedAt or quizStatus here
 
   const quizForm = document.getElementById("quiz-form");
   const timerElem = document.getElementById("timer");
@@ -67,6 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const block = document.createElement("div");
       block.className = "question-block";
 
+      // Question text with Times New Roman
       block.innerHTML = `
         <h3>Q${idx + 1}.</h3>
         <pre style="white-space: pre-wrap; font-family: 'Times New Roman', Times, serif;">${q.question}</pre>
@@ -209,12 +202,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== Redirect =====
   function redirectToExit() {
-    window.location.replace("/exit.html"); // Using replace to prevent going back
+    window.location.href = "/exit.html";
   }
-});
-
-// ===== Prevent going back to quiz page =====
-window.history.pushState(null, "", window.location.href);
-window.addEventListener("popstate", function () {
-  window.location.replace("/"); // Redirect to index page
 });
