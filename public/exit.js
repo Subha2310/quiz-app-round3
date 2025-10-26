@@ -1,3 +1,8 @@
+// ===== Prevent going back to quiz page =====
+window.history.pushState(null, "", window.location.href);
+window.addEventListener("popstate", function () {
+  window.location.replace("/"); // Redirect to index page
+});
 // ===== exit.js =====
 document.addEventListener("DOMContentLoaded", () => {
   const participant = JSON.parse(localStorage.getItem("participant")) || {};
@@ -70,10 +75,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ✅ Clear temporary data
   localStorage.removeItem("answers");
-
-  // ===== Prevent back button to quiz page =====
-  window.history.pushState(null, "", window.location.href);
-  window.addEventListener("popstate", function () {
-    window.location.replace("/"); // redirect to index/home
-  });
 });
