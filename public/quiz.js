@@ -2,23 +2,18 @@
 document.addEventListener("DOMContentLoaded", () => {
   const participant = JSON.parse(localStorage.getItem("participant"));
 
+  // ✅ Reset previous quiz data at the start
+  localStorage.removeItem("createdAt");
+  localStorage.removeItem("submittedAt");
+  localStorage.removeItem("score");
+  localStorage.removeItem("answers");
+  localStorage.removeItem("quizStatus");
+
   if (!participant || !participant.id) {
     alert("❌ No participant info found. Redirecting to login.");
     window.location.href = "/";
     return;
   }
-
-  // ✅ Redirect to exit if Round 3 already submitted
-  if (localStorage.getItem("round3SubmittedAt") && localStorage.getItem("round3QuizStatus")) {
-    window.location.replace("/exit.html");
-    return;
-  }
-
-  // ✅ Clear only temporary quiz data for a new attempt
-  localStorage.removeItem("round3Answers");
-  localStorage.removeItem("round3CreatedAt");
-  localStorage.removeItem("round3Score");
-  // Do NOT remove submittedAt or quizStatus for other rounds
 
   const quizForm = document.getElementById("quiz-form");
   const timerElem = document.getElementById("timer");
@@ -44,8 +39,8 @@ document.addEventListener("DOMContentLoaded", () => {
       renderQuestionsRound3();
 
       // ✅ Set createdAt when quiz starts
-      if (!localStorage.getItem("round3CreatedAt")) {
-        localStorage.setItem("round3CreatedAt", new Date().toISOString());
+      if (!localStorage.getItem("createdAt")) {
+        localStorage.setItem("createdAt", new Date().toISOString());
       }
 
       startTimer();
@@ -64,6 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const block = document.createElement("div");
       block.className = "question-block";
 
+      // Question text with Times New Roman
       block.innerHTML = `
         <h3>Q${idx + 1}.</h3>
         <pre style="white-space: pre-wrap; font-family: 'Times New Roman', Times, serif;">${q.question}</pre>
@@ -129,8 +125,8 @@ document.addEventListener("DOMContentLoaded", () => {
   async function submitQuiz(timeout = false) {
     try {
       const submitTime = new Date().toISOString();
-      localStorage.setItem("round3SubmittedAt", submitTime);
-      localStorage.setItem("round3QuizStatus", timeout ? "timeout" : "completed");
+      localStorage.setItem("submittedAt", submitTime);
+      localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
 
       const res = await fetch("/api/submit_round3", {
         method: "POST",
@@ -144,9 +140,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const data = await res.json();
       if (data.success) {
-        localStorage.setItem("round3Score", data.score);
+        localStorage.setItem("score", data.score);
         if (data.submitted_at) {
-          localStorage.setItem("round3SubmittedAt", data.submitted_at);
+          localStorage.setItem("submittedAt", data.submitted_at);
         }
       } else {
         console.warn("Submission failed:", data.message);
@@ -179,8 +175,8 @@ document.addEventListener("DOMContentLoaded", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ participantId: participant.id })
       });
-      localStorage.setItem("round3QuizStatus", "disqualified");
-      localStorage.setItem("round3SubmittedAt", new Date().toISOString());
+      localStorage.setItem("quizStatus", "disqualified");
+      localStorage.setItem("submittedAt", new Date().toISOString());
     } catch (err) {
       console.error("Disqualify error:", err);
     } finally {
@@ -206,6 +202,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== Redirect =====
   function redirectToExit() {
-    window.location.replace("/exit.html"); // Use replace to prevent going back
+    window.location.href = "/exit.html";
   }
 });
