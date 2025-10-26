@@ -1,4 +1,10 @@
 // ===== quiz.js for Round 3 =====
+
+// Prevent accessing quiz if already submitted
+if (localStorage.getItem("submittedAt")) {
+  window.location.replace("/exit.html");
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const participant = JSON.parse(localStorage.getItem("participant"));
 
@@ -202,6 +208,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== Redirect =====
   function redirectToExit() {
-    window.location.href = "/exit.html";
+    window.location.replace("/exit.html"); // Using replace to prevent going back
   }
+});
+
+// ===== Prevent going back to quiz page =====
+window.history.pushState(null, "", window.location.href);
+window.addEventListener("popstate", function () {
+  window.location.replace("/"); // Redirect to index page
 });

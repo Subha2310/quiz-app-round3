@@ -1,9 +1,3 @@
-// ===== Prevent going back to quiz page =====
-window.history.pushState(null, "", window.location.href);
-window.addEventListener("popstate", function () {
-  window.location.replace("/"); // Redirect to index page
-});
-
 // ===== exit.js =====
 document.addEventListener("DOMContentLoaded", () => {
   const participant = JSON.parse(localStorage.getItem("participant")) || {};
@@ -65,16 +59,21 @@ document.addEventListener("DOMContentLoaded", () => {
     durationElem.textContent = "-";
   }
 
-
-// ✅ Update backend if participant was disqualified
-if (quizStatus === "disqualified" && participant?.id) {
-  fetch("/api/disqualify_round3", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ participantId: participant.id }),
-  }).catch((err) => console.error("Disqualify update failed:", err));
-}
+  // ✅ Update backend if participant was disqualified
+  if (quizStatus === "disqualified" && participant?.id) {
+    fetch("/api/disqualify_round3", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ participantId: participant.id }),
+    }).catch((err) => console.error("Disqualify update failed:", err));
+  }
 
   // ✅ Clear temporary data
   localStorage.removeItem("answers");
+
+  // ===== Prevent back button to quiz page =====
+  window.history.pushState(null, "", window.location.href);
+  window.addEventListener("popstate", function () {
+    window.location.replace("/"); // redirect to index/home
+  });
 });
