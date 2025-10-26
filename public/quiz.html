@@ -99,17 +99,25 @@
       background: #ffffff;
       border: 1px solid #c1c1c1;
       border-radius: 8px;
-      padding: 10px 14px;
+      padding: 10px 12px;
       display: flex;
       align-items: center;
       cursor: pointer;
       transition: all 0.2s ease;
     }
 
-    .option:hover { background: #f0f0f0; border-color: #0b5394; }
-
+    .option:hover {
+  background: #f0f0f0;
+  border-color: #0b5394;
+}
     input[type="radio"] { margin-right: 10px; accent-color: #0b5394; transform: scale(1.2); }
-
+    /* If using <pre> inside options */
+.option pre {
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font-size: 14px;         /* same as option */
+}
     .submit-bar { padding: 20px 0; text-align: center; margin-top: 20px; }
 
     .submit-bar button {
