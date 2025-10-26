@@ -62,14 +62,15 @@ function renderQuestionsRound3() {
     // Use <pre> to preserve indentation and line breaks
     block.innerHTML = `
       <h3>Q${idx + 1}.</h3>
-      <pre style="white-space: pre-wrap; font-family: 'Courier New', Courier, monospace;">${q.question}</pre>
+      <pre style="white-space: pre-wrap; font-family: 'Times New Roman', Times, serif;">${q.question}</pre>
       <div class="options">
         ${q.options.map((opt, i) => {
          const letter = String.fromCharCode(97 + i); // a, b, c, d
          return `
            <label class="option">
               <input type="radio" name="q${q.id}" value="${letter}" />
-              <div style="white-space: pre-wrap; font-family: 'Courier New', Courier, monospace;">
+              <div style="white-space: pre-wrap; font-family: 'Times New Roman', Times, serif;">${letter.toUpperCase()}. ${opt.replace(/\n/g, '<br>')}</div>
+
            </label>
   `       ;
          }).join("")}
