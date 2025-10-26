@@ -9,18 +9,19 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // ✅ If participant already submitted the quiz, redirect to exit
-  if (localStorage.getItem("submittedAt") && localStorage.getItem("quizStatus")) {
+  // ✅ Redirect to exit if quiz was already submitted or disqualified
+  const submittedAt = localStorage.getItem("submittedAt");
+  const quizStatus = localStorage.getItem("quizStatus");
+  if (submittedAt && quizStatus) {
     window.location.replace("/exit.html");
     return;
   }
 
-  // ✅ Reset previous quiz data at the start (for new quiz attempt)
-  localStorage.removeItem("createdAt");
-  localStorage.removeItem("submittedAt");
-  localStorage.removeItem("score");
+  // ✅ Clear only temporary data for a new quiz attempt
   localStorage.removeItem("answers");
-  localStorage.removeItem("quizStatus");
+  localStorage.removeItem("createdAt");
+  localStorage.removeItem("score");
+  // Do NOT remove submittedAt or quizStatus here
 
   const quizForm = document.getElementById("quiz-form");
   const timerElem = document.getElementById("timer");
