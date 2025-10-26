@@ -1,25 +1,26 @@
 // ===== quiz.js for Round 3 =====
 
-// Prevent accessing quiz if already submitted
-if (localStorage.getItem("submittedAt")) {
-  window.location.replace("/exit.html");
-}
-
 document.addEventListener("DOMContentLoaded", () => {
   const participant = JSON.parse(localStorage.getItem("participant"));
-
-  // ✅ Reset previous quiz data at the start
-  localStorage.removeItem("createdAt");
-  localStorage.removeItem("submittedAt");
-  localStorage.removeItem("score");
-  localStorage.removeItem("answers");
-  localStorage.removeItem("quizStatus");
 
   if (!participant || !participant.id) {
     alert("❌ No participant info found. Redirecting to login.");
     window.location.href = "/";
     return;
   }
+
+  // ✅ If participant already submitted the quiz, redirect to exit
+  if (localStorage.getItem("submittedAt") && localStorage.getItem("quizStatus")) {
+    window.location.replace("/exit.html");
+    return;
+  }
+
+  // ✅ Reset previous quiz data at the start (for new quiz attempt)
+  localStorage.removeItem("createdAt");
+  localStorage.removeItem("submittedAt");
+  localStorage.removeItem("score");
+  localStorage.removeItem("answers");
+  localStorage.removeItem("quizStatus");
 
   const quizForm = document.getElementById("quiz-form");
   const timerElem = document.getElementById("timer");
@@ -65,7 +66,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const block = document.createElement("div");
       block.className = "question-block";
 
-      // Question text with Times New Roman
       block.innerHTML = `
         <h3>Q${idx + 1}.</h3>
         <pre style="white-space: pre-wrap; font-family: 'Times New Roman', Times, serif;">${q.question}</pre>
