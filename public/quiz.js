@@ -69,7 +69,7 @@ function renderQuestionsRound3() {
          return `
            <label class="option">
               <input type="radio" name="q${q.id}" value="${letter}" />
-              <div style="white-space: pre-wrap; font-family: 'Times New Roman', Times, serif;">
+              <div style="white-space: pre-wrap; font-family: 'Courier New', Courier, monospace;">
            </label>
   `       ;
          }).join("")}
