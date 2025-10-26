@@ -121,7 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem("submittedAt", submitTime);
       localStorage.setItem("quizStatus", timeout ? "timeout" : "completed");
 
-      const res = await fetch("/api/submit_round2", {
+      const res = await fetch("/api/submit_round3", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -156,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===== Disqualification =====
-  async function disqualifyParticipants_round2() {
+  async function disqualifyParticipants_round3() {
     if (quizEnded || submitting) return;
 
     submitting = true;
